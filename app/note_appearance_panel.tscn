@@ -1,0 +1,164 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://app/NoteAppearancePanel.cs" id="1"]
+[ext_resource type="PackedScene" path="res://app/effect_section.tscn" id="2"]
+[ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
+
+[node name="NoteAppearancePanel" type="VBoxContainer"]
+theme_override_constants/separation = 10
+script = ExtResource("1")
+
+[node name="Style" parent="." instance=ExtResource("2")]
+layout_mode = 2
+Title = "样式"
+HasSwitch = false
+
+[node name="Shape" type="OptionButton" parent="Style/Fields"]
+layout_mode = 2
+
+[node name="Radius" type="HBoxContainer" parent="Style/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Style/Fields/Radius"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "圆角半径（像素）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Style/Fields/Radius"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Style/Fields/Radius"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 32
+step = 0.5
+value = 6
+alignment = 2
+select_all_on_focus = true
+
+[node name="Opacity" type="HBoxContainer" parent="Style/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Style/Fields/Opacity"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "不透明度（%）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Style/Fields/Opacity"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Style/Fields/Opacity"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 100
+step = 5
+value = 100
+alignment = 2
+select_all_on_focus = true
+
+[node name="Brightness" type="HBoxContainer" parent="Style/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Style/Fields/Brightness"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "亮度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Style/Fields/Brightness"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Style/Fields/Brightness"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 4
+step = 0.1
+value = 1
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Style/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "圆角半径按 1080p 画面计算；窄、短音符会自动限制圆角大小。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Style/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复音符样式参数"
+
+[node name="Emission" parent="." instance=ExtResource("2")]
+layout_mode = 2
+Title = "音符发光"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Emission/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Emission/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "发光强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Emission/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Emission/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 8
+step = 0.1
+value = 0
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Emission/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "提高音符的发光亮度；外围光晕由「光效 → 全局光晕」控制。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Emission/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复音符发光参数"
+

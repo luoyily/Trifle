@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://app/SongInfoDialog.cs" id="1"]
+
+[node name="SongInfoDialog" type="Window"]
+title = "曲目信息"
+size = Vector2i(720, 440)
+min_size = Vector2i(560, 360)
+visible = false
+exclusive = true
+script = ExtResource("1")
+
+[node name="Background" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SongName" type="Label" parent="Margin/Content"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+text_overrun_behavior = 3
+
+[node name="Summary" type="Label" parent="Margin/Content"]
+layout_mode = 2
+autowrap_mode = 3
+theme_type_variation = &"MutedLabel"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Tracks" type="GridContainer" parent="Margin/Content/Scroll"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 12
+
+[node name="Details" type="Label" parent="Margin/Content"]
+layout_mode = 2
+autowrap_mode = 3
+theme_type_variation = &"HelpLabel"
+
+[node name="Source" type="Label" parent="Margin/Content"]
+layout_mode = 2
+autowrap_mode = 3
+theme_type_variation = &"HelpLabel"
+

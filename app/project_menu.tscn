@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://app/ProjectMenu.cs" id="1"]
+
+[node name="ProjectMenu" type="MenuButton"]
+text = "项目"
+script = ExtResource("1")
+theme_type_variation = &"MenuText"
+
+[node name="Files" type="FileDialog" parent="."]
+access = 2
+size = Vector2i(800, 500)
+use_native_dialog = true
+
+[node name="MissingMidi" type="ConfirmationDialog" parent="."]
+title = "项目 MIDI 无法载入"
+size = Vector2i(640, 220)
+ok_button_text = "重新选择 MIDI…"
+cancel_button_text = "取消"
+

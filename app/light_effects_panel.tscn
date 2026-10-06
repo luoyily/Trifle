@@ -1,0 +1,630 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://app/LightEffectsPanel.cs" id="1"]
+[ext_resource type="PackedScene" path="res://app/effect_section.tscn" id="2"]
+[ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
+
+[node name="LightEffectsPanel" type="VBoxContainer"]
+theme_override_constants/separation = 10
+script = ExtResource("1")
+
+[node name="Header" type="Button" parent="."]
+layout_mode = 2
+text = "▸ 光效"
+toggle_mode = true
+alignment = 0
+tooltip_text = "展开 / 折叠光效设置"
+theme_type_variation = &"SectionHeader"
+custom_minimum_size = Vector2(0, 34)
+flat = false
+
+[node name="Fields" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Glow" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "全局光晕"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Glow/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Glow/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "光晕强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Glow/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Glow/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 3
+step = 0.01
+value = 1
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Glow/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "为画面中较亮的效果添加光晕，影响所有发光效果。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Glow/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复全局光晕参数"
+
+[node name="Keyboard" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "按键发光"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Keyboard/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Keyboard/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "发光强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Keyboard/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Keyboard/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 8
+step = 0.1
+value = 0
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Keyboard/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "作用于整个按下的键面。关闭发光后，仍保留按下状态的颜色。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Keyboard/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复按键发光参数"
+
+[node name="Hit" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "接触光点"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Hit/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Hit/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "发光强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Hit/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Hit/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 8
+step = 0.1
+value = 0
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Hit/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "音符与琴键接触位置的小范围亮光。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Hit/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复接触光点参数"
+
+[node name="Area" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "键盘泛光"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Area/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Area/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "泛光强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Area/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Area/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 3
+step = 0.1
+value = 0.9
+alignment = 2
+select_all_on_focus = true
+
+[node name="Radius" type="HBoxContainer" parent="Fields/Area/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Area/Fields/Radius"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "单侧范围（白键）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Area/Fields/Radius"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Area/Fields/Radius"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0.5
+max_value = 8
+step = 0.5
+value = 2.5
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Area/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "从触键位置向两侧扩散，只显示在键盘区域。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Area/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复键盘泛光参数"
+
+[node name="Near" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "近键音符增亮"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Near/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Near/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "增亮强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Near/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Near/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 4
+step = 0.1
+value = 0
+alignment = 2
+select_all_on_focus = true
+
+[node name="Distance" type="HBoxContainer" parent="Fields/Near/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Near/Fields/Distance"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "增亮范围（像素）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Near/Fields/Distance"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Near/Fields/Distance"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 10
+max_value = 400
+step = 10
+value = 140
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Near/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "触键时增强靠近键盘的音符亮度，可独立于按键发光启用。像素按 1080p 画面计算。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Near/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复近键音符增亮参数"
+
+[node name="Line" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "接触线"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Line/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Line/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "线条亮度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Line/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Line/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 3
+step = 0.1
+value = 0.4
+alignment = 2
+select_all_on_focus = true
+
+[node name="Width" type="HBoxContainer" parent="Fields/Line/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Line/Fields/Width"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "线条粗细（像素）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Line/Fields/Width"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Line/Fields/Width"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0.5
+max_value = 10
+step = 0.5
+value = 3.5
+alignment = 2
+select_all_on_focus = true
+
+[node name="Color" type="HBoxContainer" parent="Fields/Line/Fields"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Fields/Line/Fields/Color"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "颜色"
+
+[node name="Value" type="ColorPickerButton" parent="Fields/Line/Fields/Color"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 36)
+edit_alpha = false
+tooltip_text = "选择自定义颜色"
+
+[node name="Help" type="Label" parent="Fields/Line/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "沿琴键顶端延伸的亮线；与光带分别控制。像素按 1080p 画面计算。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Line/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复接触线参数"
+
+[node name="Halo" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "光带"
+HasSwitch = true
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Halo/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Halo/Fields/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "光带亮度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Halo/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Halo/Fields/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 3
+step = 0.1
+value = 0.4
+alignment = 2
+select_all_on_focus = true
+
+[node name="Width" type="HBoxContainer" parent="Fields/Halo/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Halo/Fields/Width"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "光带宽度（像素）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Halo/Fields/Width"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Halo/Fields/Width"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 4
+max_value = 40
+step = 1
+value = 18
+alignment = 2
+select_all_on_focus = true
+
+[node name="Follow" type="CheckButton" parent="Fields/Halo/Fields"]
+layout_mode = 2
+text = "跟随接触线颜色"
+custom_minimum_size = Vector2(0, 32)
+
+[node name="Color" type="HBoxContainer" parent="Fields/Halo/Fields"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Fields/Halo/Fields/Color"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "颜色"
+
+[node name="Value" type="ColorPickerButton" parent="Fields/Halo/Fields/Color"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 36)
+edit_alpha = false
+tooltip_text = "选择自定义颜色"
+
+[node name="Help" type="Label" parent="Fields/Halo/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "接触线周围的柔光。取消颜色跟随后可单独选色，原来的独立颜色会保留。像素按 1080p 画面计算。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Halo/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复光带参数"
+
+[node name="LineMotion" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "接触线与光带响应"
+HasSwitch = false
+
+[node name="Wave" type="HBoxContainer" parent="Fields/LineMotion/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/LineMotion/Fields/Wave"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "波动幅度（像素）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/LineMotion/Fields/Wave"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/LineMotion/Fields/Wave"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 6
+step = 0.2
+value = 1.8
+alignment = 2
+select_all_on_focus = true
+
+[node name="Boost" type="HBoxContainer" parent="Fields/LineMotion/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/LineMotion/Fields/Boost"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "触键增亮"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/LineMotion/Fields/Boost"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/LineMotion/Fields/Boost"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 4.8
+step = 0.1
+value = 0.8
+alignment = 2
+select_all_on_focus = true
+
+[node name="Tint" type="CheckButton" parent="Fields/LineMotion/Fields"]
+layout_mode = 2
+text = "随音符染色"
+custom_minimum_size = Vector2(0, 32)
+
+[node name="Help" type="Label" parent="Fields/LineMotion/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "两者共享波动和触键响应。关闭染色后保持自定义颜色，仍随触键增亮和波动。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/LineMotion/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复接触线与光带响应参数"
+
+[node name="Response" parent="Fields" instance=ExtResource("2")]
+layout_mode = 2
+Title = "共享触键节奏"
+HasSwitch = false
+
+[node name="Decay" type="HBoxContainer" parent="Fields/Response/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Response/Fields/Decay"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "起音增强（秒）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Response/Fields/Decay"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Response/Fields/Decay"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0.05
+max_value = 2
+step = 0.05
+value = 0.3
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Response/Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "控制按键发光、接触光点、键盘泛光以及接触线与光带的起音增强时长。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Response/Fields"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复共享触键节奏参数"
+

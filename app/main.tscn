@@ -1,0 +1,233 @@
+[gd_scene load_steps=10 format=3 uid="uid://bau4p41a8arlt"]
+
+[ext_resource type="Script" uid="uid://dvtf2sqeokymw" path="res://app/Main.cs" id="1_main"]
+[ext_resource type="PackedScene" path="res://visualizer/visualizer.tscn" id="2_visualizer"]
+[ext_resource type="PackedScene" path="res://app/song_info_dialog.tscn" id="3_info"]
+[ext_resource type="PackedScene" path="res://app/export_dialog.tscn" id="4_export"]
+[ext_resource type="PackedScene" path="res://app/settings_panel.tscn" id="5_settings"]
+[ext_resource type="PackedScene" path="res://app/project_menu.tscn" id="6_project"]
+[ext_resource type="Script" path="res://audio/AudioPlayback.cs" id="7_audio"]
+[ext_resource type="Shader" path="res://visualizer/linear_to_srgb.gdshader" id="8_output"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_output"]
+shader = ExtResource("8_output")
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="HdrViewport" type="SubViewport" parent="."]
+own_world_3d = true
+size = Vector2i(1920, 1080)
+use_hdr_2d = true
+render_target_update_mode = 4
+
+[node name="Visualizer" parent="HdrViewport" instance=ExtResource("2_visualizer")]
+
+[node name="PreviewViewport" type="SubViewport" parent="."]
+size = Vector2i(1920, 1080)
+render_target_update_mode = 4
+
+[node name="Present" type="TextureRect" parent="PreviewViewport"]
+material = SubResource("ShaderMaterial_output")
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="AudioPlayback" type="AudioStreamPlayer" parent="."]
+script = ExtResource("7_audio")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.090196, 0.094118, 0.117647, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 4
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Header" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+custom_minimum_size = Vector2(0, 52)
+
+[node name="Brand" type="Label" parent="Margin/Content/Header"]
+layout_mode = 2
+theme_type_variation = &"BrandLabel"
+text = "Trifle"
+[node name="BrandDivider" type="VSeparator" parent="Margin/Content/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(20, 24)
+size_flags_vertical = 4
+[node name="Title" type="Label" parent="Margin/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "未打开 MIDI"
+clip_text = true
+theme_type_variation = &"TitleLabel"
+
+[node name="ProjectMenu" parent="Margin/Content/Header" instance=ExtResource("6_project")]
+layout_mode = 2
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="Import" type="Button" parent="Margin/Content/Header"]
+layout_mode = 2
+text = "打开 MIDI"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="Info" type="Button" parent="Margin/Content/Header"]
+layout_mode = 2
+text = "曲目信息"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="Export" type="Button" parent="Margin/Content/Header"]
+layout_mode = 2
+text = "导出视频"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="Settings" type="Button" parent="Margin/Content/Header"]
+layout_mode = 2
+text = "设置"
+toggle_mode = true
+button_pressed = true
+tooltip_text = "显示 / 隐藏右侧设置栏"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="HideUi" type="Button" parent="Margin/Content/Header"]
+layout_mode = 2
+text = "隐藏界面"
+tooltip_text = "Ctrl+H 显示 / 隐藏界面，Esc 恢复界面，F10 窗口调整为 16:9，F11 全屏"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
+[node name="EndSpace" type="Control" parent="Margin/Content/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(10, 0)
+[node name="HeaderDivider" type="HSeparator" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 1
+[node name="Body" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Preview" type="TextureRect" parent="Margin/Content/Body"]
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SettingsPanel" parent="Margin/Content/Body" instance=ExtResource("5_settings")]
+layout_mode = 2
+
+[node name="TransportDivider" type="HSeparator" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 1
+[node name="Transport" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+custom_minimum_size = Vector2(0, 42)
+
+[node name="Play" type="Button" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+text = ""
+size_flags_vertical = 4
+theme_type_variation = &"PlayButton"
+tooltip_text = "播放 / 暂停（Space）"
+
+[node name="Stop" type="Button" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+text = ""
+size_flags_vertical = 4
+theme_type_variation = &"IconButton"
+tooltip_text = "停止并回到起点"
+
+[node name="Start" type="Button" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+text = ""
+size_flags_vertical = 4
+theme_type_variation = &"IconButton"
+tooltip_text = "回到起点"
+
+[node name="FirstNote" type="Button" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+text = ""
+size_flags_vertical = 4
+theme_type_variation = &"IconButton"
+tooltip_text = "跳转到首个音符"
+
+[node name="Time" type="HSlider" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+step = 0.001
+tooltip_text = "拖动以跳转播放位置"
+scrollable = false
+
+[node name="TimeLabel" type="Label" parent="Margin/Content/Transport"]
+custom_minimum_size = Vector2(110, 32)
+layout_mode = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+text = "00:00 / 00:00"
+theme_type_variation = &"MutedLabel"
+size_flags_vertical = 4
+
+[node name="EndSpace" type="Control" parent="Margin/Content/Transport"]
+layout_mode = 2
+custom_minimum_size = Vector2(16, 0)
+[node name="Status" type="Label" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+autowrap_mode = 0
+theme_type_variation = &"StatusLabel"
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="MidiDialog" type="FileDialog" parent="."]
+title = "导入 MIDI"
+size = Vector2i(900, 600)
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.mid,*.midi ; MIDI 文件")
+use_native_dialog = true
+
+[node name="SongInfoDialog" parent="." instance=ExtResource("3_info")]
+
+[node name="ExportDialog" parent="." instance=ExtResource("4_export")]
+

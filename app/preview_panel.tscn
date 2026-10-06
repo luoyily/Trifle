@@ -1,0 +1,32 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://app/PreviewPanel.cs" id="1"]
+
+[node name="PreviewPanel" type="VBoxContainer"]
+script = ExtResource("1")
+
+[node name="Header" type="Button" parent="."]
+layout_mode = 2
+text = "▸ 预览"
+toggle_mode = true
+alignment = 0
+theme_type_variation = &"SectionHeader"
+custom_minimum_size = Vector2(0, 34)
+flat = false
+
+[node name="Fields" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Size" type="OptionButton" parent="Fields"]
+layout_mode = 2
+
+[node name="Fps" type="OptionButton" parent="Fields"]
+layout_mode = 2
+
+[node name="Help" type="Label" parent="Fields"]
+layout_mode = 2
+autowrap_mode = 3
+text = "降低预览规格可减少显卡负担。F10 将窗口调整为 16:9；F11 全屏。导出使用独立的分辨率和帧率。"
+theme_type_variation = &"HelpLabel"
+

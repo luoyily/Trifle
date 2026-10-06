@@ -1,0 +1,185 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://app/ExportDialog.cs" id="1"]
+
+[node name="ExportDialog" type="Window"]
+title = "导出视频"
+size = Vector2i(760, 550)
+min_size = Vector2i(640, 550)
+visible = false
+exclusive = true
+script = ExtResource("1")
+
+[node name="Background" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Output" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="Margin/Content/Output"]
+layout_mode = 2
+text = "输出文件"
+
+[node name="Path" type="LineEdit" parent="Margin/Content/Output"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Browse" type="Button" parent="Margin/Content/Output"]
+layout_mode = 2
+text = "选择…"
+
+[node name="Range" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StartLabel" type="Label" parent="Margin/Content/Range"]
+layout_mode = 2
+text = "开始（秒）"
+
+[node name="Start" type="SpinBox" parent="Margin/Content/Range"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+max_value = 100000.0
+step = 0.001
+alignment = 2
+select_all_on_focus = true
+
+[node name="EndLabel" type="Label" parent="Margin/Content/Range"]
+layout_mode = 2
+text = "结束（秒）"
+
+[node name="End" type="SpinBox" parent="Margin/Content/Range"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+max_value = 100000.0
+step = 0.001
+alignment = 2
+select_all_on_focus = true
+
+[node name="Format" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Size" type="OptionButton" parent="Margin/Content/Format"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Fps" type="OptionButton" parent="Margin/Content/Format"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Encoding" type="GridContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="EncoderLabel" type="Label" parent="Margin/Content/Encoding"]
+layout_mode = 2
+custom_minimum_size = Vector2(104, 0)
+text = "编码器"
+
+[node name="Encoder" type="OptionButton" parent="Margin/Content/Encoding"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "H.264 / H.265 软件编码"
+
+[node name="CrfLabel" type="Label" parent="Margin/Content/Encoding"]
+layout_mode = 2
+text = "画质（CRF）"
+
+[node name="Crf" type="SpinBox" parent="Margin/Content/Encoding"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 51.0
+value = 18.0
+step = 1.0
+select_all_on_focus = true
+tooltip_text = "数值越低，画质越高，文件通常越大。不同编码器的相同 CRF 不代表相同画质。"
+
+[node name="PresetLabel" type="Label" parent="Margin/Content/Encoding"]
+layout_mode = 2
+text = "编码预设"
+
+[node name="Preset" type="OptionButton" parent="Margin/Content/Encoding"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "按编码速度从快到慢排列；慢速预设通常有更好的压缩效率。"
+
+[node name="AudioQualityLabel" type="Label" parent="Margin/Content/Encoding"]
+layout_mode = 2
+text = "音频质量"
+
+[node name="AudioQuality" type="OptionButton" parent="Margin/Content/Encoding"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "AAC 音频码率；未启用音频时不参与导出。"
+
+[node name="Ffmpeg" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="Margin/Content/Ffmpeg"]
+layout_mode = 2
+text = "FFmpeg"
+
+[node name="Path" type="LineEdit" parent="Margin/Content/Ffmpeg"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ffmpeg"
+tooltip_text = "可执行文件名或完整路径"
+
+[node name="Progress" type="ProgressBar" parent="Margin/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
+
+[node name="Message" type="Label" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Begin" type="Button" parent="Margin/Content/Actions"]
+layout_mode = 2
+text = "开始导出"
+
+[node name="Cancel" type="Button" parent="Margin/Content/Actions"]
+layout_mode = 2
+text = "取消导出"
+disabled = true
+
+[node name="Close" type="Button" parent="Margin/Content/Actions"]
+layout_mode = 2
+text = "关闭"
+
+[node name="SaveDialog" type="FileDialog" parent="."]
+title = "选择视频输出文件"
+file_mode = 4
+access = 2
+filters = PackedStringArray("*.mp4 ; MP4 视频")
+use_native_dialog = true
+
+[node name="Overwrite" type="ConfirmationDialog" parent="."]
+title = "确认覆盖"
+size = Vector2i(560, 180)
+

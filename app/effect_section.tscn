@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://app/EffectSection.cs" id="1"]
+
+[node name="EffectSection" type="VBoxContainer"]
+theme_override_constants/separation = 8
+script = ExtResource("1")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Expand" type="Button" parent="Header"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "▸ 效果"
+toggle_mode = true
+alignment = 0
+flat = false
+theme_type_variation = &"EffectHeader"
+
+[node name="Enabled" type="CheckButton" parent="Header"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="Fields" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+

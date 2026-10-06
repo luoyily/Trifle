@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Godot: 调试项目",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "C:/data/Program/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64.exe",
+      "args": [
+        "--path",
+        "${workspaceFolder}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}
