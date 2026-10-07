@@ -1,0 +1,18 @@
+shader_type canvas_item;
+render_mode unshaded, blend_disabled;
+
+uniform float sigma = 0.0;
+
+void fragment() {
+    vec4 result = vec4(0.0);
+    float total = 0.0;
+    for (int i = -12; i <= 12; i++) {
+        if (abs(float(i)) <= ceil(sigma * 3.0)) {
+            float distance = float(i) / max(sigma, 0.001);
+            float weight = exp(-0.5 * distance * distance);
+            result += texture(TEXTURE, UV + vec2(float(i) * TEXTURE_PIXEL_SIZE.x, 0.0)) * weight;
+            total += weight;
+        }
+    }
+    COLOR = result / max(total, 0.001);
+}

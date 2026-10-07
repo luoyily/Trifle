@@ -29,12 +29,13 @@ public partial class Visualizer : Node2D
     private ParticleEffects _particles;
     private ParticleSettings _particleSettings = new();
     private Godot.Environment _environment;
-    private TextureRect _backgroundImage;
+    private BackgroundLayer _backgroundImage;
+    private Texture2D _imageTexture, _videoTexture;
     private ShaderMaterial _outputMaterial;
     private readonly Godot.Collections.Array<Vector4> _keyLightSources = new();
     private readonly Godot.Collections.Array<Vector4> _keyLightColors = new();
     public string BackgroundWarning { get; private set; } = "";
-    public bool HasBackgroundImage => _background.Type == BackgroundType.Image && _backgroundImage.Texture != null;
+    public bool HasBackgroundImage => _background.Type == BackgroundType.Image && _imageTexture != null;
     public KeyboardAppearance KeyboardAppearance => _appearance;
     public BackgroundSettings Background => _background;
     public NoteAppearance NoteAppearance => _noteAppearance;
@@ -50,7 +51,7 @@ public partial class Visualizer : Node2D
         _notes = GetNode<NoteRenderer>("Notes");
         _hits = GetNode<HitEffects>("HitEffects");
         _particles = GetNode<ParticleEffects>("ParticleEffects");
-        _backgroundImage = GetNode<TextureRect>("BackgroundImage");
+        _backgroundImage = GetNode<BackgroundLayer>("BackgroundImage");
         _environment = GetNode<WorldEnvironment>("WorldEnvironment").Environment;
         for (int i = 0; i < 128; i++) { _keyLightSources.Add(Vector4.Zero); _keyLightColors.Add(Vector4.Zero); }
         SetGlow(_glow);
@@ -205,7 +206,7 @@ public partial class Visualizer : Node2D
     public void SetBackground(BackgroundSettings settings, bool allowFallback = false, bool reloadImage = false)
     {
         settings.Validate();
-        Texture2D texture = _backgroundImage.Texture;
+        Texture2D texture = _imageTexture;
         string warning = BackgroundWarning;
         // Color and mode changes reuse the loaded GPU texture; an explicit reload can retry a missing image.
         if (reloadImage || settings.ImagePath != _background.ImagePath || (settings.ImagePath.Length > 0 && texture == null))
@@ -227,17 +228,23 @@ public partial class Visualizer : Node2D
             { warning = "背景图片不可用，已使用背景色：" + settings.ImagePath; }
         }
         if (settings.ImagePath.Length == 0) { texture = null; warning = ""; }
-        var previous = _backgroundImage.Texture;
-        _backgroundImage.Texture = texture;
-        _backgroundImage.StretchMode = settings.Fit == BackgroundFit.Contain
-            ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.KeepAspectCovered;
-        _backgroundImage.Visible = settings.Type == BackgroundType.Image;
-        _backgroundImage.Modulate = new Color((float)settings.Brightness, (float)settings.Brightness, (float)settings.Brightness, (float)settings.Opacity);
+        var previous = _imageTexture;
+        _imageTexture = texture;
         _background = settings;
+        RefreshBackgroundLayer();
         BackgroundWarning = settings.Type == BackgroundType.Image ? warning : "";
         if (previous != texture) previous?.Dispose();
         QueueRedraw();
     }
+
+    public void SetVideoTexture(Texture2D texture)
+    {
+        _videoTexture = texture;
+        RefreshBackgroundLayer();
+    }
+
+    private void RefreshBackgroundLayer() => _backgroundImage.Configure(
+        _background.Type == BackgroundType.Video ? _videoTexture : _imageTexture, _background);
 
     public VisualSettings GetSettings() => new()
     {
@@ -290,6 +297,13 @@ public partial class Visualizer : Node2D
         }
         var first = Appearance(_background.Color);
         var last = Appearance(_background.EndColor);
+        if (_background.Type is BackgroundType.Image or BackgroundType.Video)
+        {
+            // The fill stays independent of the source's opacity and brightness.
+            var fill = new Color(_background.Color);
+            DrawRect(new Rect2(0, 0, 1920, 1080), new Color(fill.R, fill.G, fill.B, 1));
+            return;
+        }
         if (_background.Type == BackgroundType.Solid || _background.Gradient == BackgroundGradient.Solid)
             DrawRect(new Rect2(0, 0, 1920, 1080), first);
         else

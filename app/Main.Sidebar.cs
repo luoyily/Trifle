@@ -30,14 +30,15 @@ public partial class Main
         var midi = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".mid" or ".midi").ToArray();
         var audio = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".ogg" or ".mp3" or ".wav").ToArray();
         var image = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp").ToArray();
-        if (midi.Length > 1 || audio.Length > 1 || image.Length > 1)
+        var video = paths.Where(Trifle.Video.VideoBackgroundSettings.IsVideoPath).ToArray();
+        if (midi.Length > 1 || audio.Length > 1 || image.Length + video.Length > 1)
         {
-            SetStatus("每次请只拖入一个 MIDI、一份音频和一张背景图片。");
+            SetStatus("每次请只拖入一个 MIDI、一份音频和一个背景文件（图片或视频）。");
             return;
         }
-        if (midi.Length + audio.Length + image.Length != paths.Length)
+        if (midi.Length + audio.Length + image.Length + video.Length != paths.Length)
         {
-            SetStatus("支持拖入 MIDI、OGG / MP3 / WAV 音频和 PNG / JPEG / WebP 背景图片。");
+            SetStatus("支持拖入 MIDI、音频、背景图片，以及 MP4 / MKV / MOV / WebM / AVI / M4V 背景视频。");
             return;
         }
         if (midi.Length > 0)
@@ -48,6 +49,7 @@ public partial class Main
         }
         if (audio.Length > 0) LoadAudioFile(audio[0]);
         if (image.Length > 0) LoadBackgroundImage(image[0]);
+        if (video.Length > 0) LoadBackgroundVideo(video[0]);
     }
 
     public void SetBackgroundType(int type)
@@ -65,10 +67,10 @@ public partial class Main
         RefreshBackgroundSettings();
     }
 
-    public void SetBackgroundAppearance(double opacity, double brightness)
+    public void SetBackgroundAppearance(double opacity, double brightness, double blur = 0)
     {
         if (_busy) return;
-        _visualizer.SetBackground(_visualizer.Background with { Opacity = opacity, Brightness = brightness }, allowFallback: true);
+        _visualizer.SetBackground(_visualizer.Background with { Opacity = opacity, Brightness = brightness, Blur = blur }, allowFallback: true);
         RefreshBackgroundSettings();
     }
 
@@ -79,19 +81,25 @@ public partial class Main
         {
             BackgroundType.Gradient => "渐变背景",
             BackgroundType.Image => _visualizer.HasBackgroundImage ? "图片背景" : "背景色（图片不可用）",
+            BackgroundType.Video => background.Video.Path.Length > 0 ? "视频背景" : "底色（未选择视频）",
             _ => "纯色背景"
         };
         var contents = new List<string> { "MIDI 音符", "键盘", kind };
         if (_visualizer.Particles.Enabled || _visualizer.Particles.Curves) contents.Add("粒子 / 流线");
         if (_audio.Settings.Enabled && _audio.Stream != null) contents.Add("音频");
         var warnings = new List<string>();
+        if (background.Type == BackgroundType.Video && background.Video.Path.Length > 0)
+        {
+            if (!File.Exists(background.Video.Path)) warnings.Add("背景视频源文件不可用，请重新选择视频后导出。");
+            else if (_videoBackground.Error.Length > 0) warnings.Add("背景视频预览不可用，请检查视频与 FFmpeg 路径后导出。");
+        }
         if (_visualizer.BackgroundWarning.Length > 0) warnings.Add("背景图片不可用，将使用背景色。");
         else if (background.Type == BackgroundType.Image && background.ImagePath.Length > 0 && !File.Exists(background.ImagePath))
             warnings.Add("背景源文件不可用，将使用已加载的图片。");
         if (_audio.Settings.Enabled && _audio.Settings.Path.Length > 0 && !File.Exists(_audio.Settings.Path))
             warnings.Add("音频源文件不可用，请重新选择音频后导出。");
         _exportDialog.SetContents(string.Join(" · ", contents), string.Join("\n", warnings),
-            _visualizer.BackgroundWarning);
+            background.Type == BackgroundType.Video ? _videoBackground.Error : _visualizer.BackgroundWarning);
         _quick.RefreshMidi(_song.SourcePath, File.Exists(_song.SourcePath));
         _quick.RefreshAudio(_audio.Settings, _audio.Duration, _audio.Stream != null && File.Exists(_audio.Settings.Path));
     }

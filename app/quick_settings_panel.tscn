@@ -167,3 +167,12 @@ file_mode = 0
 access = 2
 use_native_dialog = true
 filters = PackedStringArray("*.png,*.jpg,*.jpeg,*.webp ; 图片文件")
+
+[node name="VideoFiles" type="FileDialog" parent="."]
+layout_mode = 2
+title = "选择背景视频"
+size = Vector2i(800, 500)
+file_mode = 0
+access = 2
+use_native_dialog = true
+filters = PackedStringArray("*.mp4,*.mkv,*.mov,*.webm,*.avi,*.m4v ; 视频文件")

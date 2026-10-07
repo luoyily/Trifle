@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bau4p41a8arlt"]
+[gd_scene load_steps=11 format=3 uid="uid://bau4p41a8arlt"]
 
 [ext_resource type="Script" uid="uid://dvtf2sqeokymw" path="res://app/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://visualizer/visualizer.tscn" id="2_visualizer"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://app/project_menu.tscn" id="6_project"]
 [ext_resource type="Script" path="res://audio/AudioPlayback.cs" id="7_audio"]
 [ext_resource type="Shader" path="res://visualizer/linear_to_srgb.gdshader" id="8_output"]
+[ext_resource type="Script" path="res://video/VideoBackground.cs" id="9_video"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_output"]
 shader = ExtResource("8_output")
@@ -32,6 +33,9 @@ render_target_update_mode = 4
 [node name="PreviewViewport" type="SubViewport" parent="."]
 size = Vector2i(1920, 1080)
 render_target_update_mode = 4
+
+[node name="VideoBackground" type="Node" parent="."]
+script = ExtResource("9_video")
 
 [node name="Present" type="TextureRect" parent="PreviewViewport"]
 material = SubResource("ShaderMaterial_output")

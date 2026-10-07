@@ -11,6 +11,14 @@ public partial class ExportDialog : Window
 {
     public event Action<ExportSettings, string> ExportRequested;
     public event Action CancelRequested;
+    public event Action FfmpegPathChanged;
+    public string FfmpegPath => _ffmpeg.Text.Trim();
+
+    public void SetFfmpegPath(string path)
+    {
+        _ffmpeg.Text = path;
+        FfmpegPathChanged?.Invoke();
+    }
     private LineEdit _path;
     private LineEdit _ffmpeg;
     private SpinBox _start;
@@ -72,6 +80,8 @@ public partial class ExportDialog : Window
         ApplyEncoding(new EncodingSettings());
         string bundled = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
         if (File.Exists(bundled)) _ffmpeg.Text = bundled;
+        _ffmpeg.TextSubmitted += _ => FfmpegPathChanged?.Invoke();
+        _ffmpeg.FocusExited += () => FfmpegPathChanged?.Invoke();
         _browse.Pressed += () =>
         {
             string parent = Path.GetDirectoryName(_path.Text);
@@ -131,6 +141,7 @@ public partial class ExportDialog : Window
         _size.Select(Array.IndexOf(Heights, preferences.Height));
         _fps.Select(Array.IndexOf(Rates, preferences.FramesPerSecond));
         ApplyEncoding(preferences.Encoding);
+        FfmpegPathChanged?.Invoke();
     }
 
     private EncodingSettings GetEncoding() => new()

@@ -12,6 +12,7 @@ if (args.Contains("--effect-settings")) { EffectSettingsChecks.Run(); return; }
 if (args.Contains("--transport")) { TransportChecks.Run(); return; }
 if (args.Contains("--encoding")) { EncodingChecks.Run(); return; }
 if (args.Contains("--audio-timeline")) { AudioTimelineChecks.Run(); return; }
+if (args.Contains("--video-background")) { await VideoBackgroundChecks.RunAsync(args.LastOrDefault()); return; }
 
 int checks = 0;
 void Check(bool condition, string name)

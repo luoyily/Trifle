@@ -1,8 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://app/BackgroundPanel.cs" id="1"]
 
 [ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
+[ext_resource type="PackedScene" path="res://app/effect_section.tscn" id="video_section"]
 
 [node name="BackgroundPanel" type="VBoxContainer"]
 theme_override_constants/separation = 12
@@ -33,7 +34,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="Fields/Content/Color"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "留白填充色"
+text = "底色"
 
 [node name="Value" type="ColorPickerButton" parent="Fields/Content/Color"]
 layout_mode = 2
@@ -50,7 +51,7 @@ clip_text = true
 [node name="Help" type="Label" parent="Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
-text = "背景颜色和文件在快速设置中选择；透明度与亮度同时用于预览和导出。"
+text = "背景素材在快速设置中选择。图片和视频共用效果；不透明度降低时显露底色。"
 theme_type_variation = &"HelpLabel"
 
 [node name="Opacity" type="HBoxContainer" parent="Fields/Content"]
@@ -60,7 +61,7 @@ theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="Fields/Content/Opacity"]
 layout_mode = 2
-text = "透明度"
+text = "不透明度（%）"
 custom_minimum_size = Vector2(108, 0)
 theme_type_variation = &"MutedLabel"
 
@@ -74,9 +75,9 @@ scrollable = false
 [node name="Value" type="SpinBox" parent="Fields/Content/Opacity"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
-max_value = 1
-step = 0.01
-value = 1
+max_value = 100
+step = 1
+value = 100
 alignment = 2
 select_all_on_focus = true
 
@@ -87,7 +88,7 @@ theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="Fields/Content/Brightness"]
 layout_mode = 2
-text = "亮度"
+text = "亮度（%）"
 custom_minimum_size = Vector2(108, 0)
 theme_type_variation = &"MutedLabel"
 
@@ -101,8 +102,87 @@ scrollable = false
 [node name="Value" type="SpinBox" parent="Fields/Content/Brightness"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
-max_value = 2
-step = 0.01
-value = 1
+max_value = 200
+step = 1
+value = 100
 alignment = 2
 select_all_on_focus = true
+
+[node name="Blur" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+script = ExtResource("ui_parameter")
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Fields/Content/Blur"]
+layout_mode = 2
+text = "模糊强度"
+custom_minimum_size = Vector2(108, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="Slider" type="HSlider" parent="Fields/Content/Blur"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(54, 32)
+size_flags_vertical = 4
+scrollable = false
+
+[node name="Value" type="SpinBox" parent="Fields/Content/Blur"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+max_value = 40
+step = 0.5
+alignment = 2
+select_all_on_focus = true
+
+[node name="Video" parent="Fields/Content" instance=ExtResource("video_section")]
+layout_mode = 2
+Title = "视频高级设置"
+HasSwitch = false
+
+[node name="Resolution" type="OptionButton" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+clip_text = true
+tooltip_text = "仅调整背景视频预览；导出使用原视频。"
+
+[node name="FrameRate" type="OptionButton" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+clip_text = true
+tooltip_text = "仅调整背景视频预览帧率；导出跟随导出窗口的帧率。"
+
+[node name="Loop" type="CheckButton" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+text = "循环播放"
+button_pressed = true
+tooltip_text = "关闭后播放到视频末尾时保持最后一帧。"
+
+[node name="Offset" type="HBoxContainer" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Fields/Content/Video/Fields/Content/Offset"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "时间偏移（秒）"
+theme_type_variation = &"MutedLabel"
+tooltip_text = "正值延迟视频开始；负值跳过视频开头。"
+
+[node name="Value" type="SpinBox" parent="Fields/Content/Video/Fields/Content/Offset"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 32)
+min_value = -3600
+max_value = 3600
+step = 0.01
+alignment = 2
+select_all_on_focus = true
+
+[node name="Status" type="Label" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "未选择视频"
+theme_type_variation = &"HelpLabel"
+
+[node name="Help" type="Label" parent="Fields/Content/Video/Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "视频跟随 MIDI 时间；预览默认 720p / 30 FPS。FFmpeg 路径在导出窗口中设置；背景视频自身音轨不参与播放与导出。"
+theme_type_variation = &"HelpLabel"

@@ -76,6 +76,7 @@ public partial class Main : Control
         _viewport = GetNode<SubViewport>("PreviewViewport");
         _hdrViewport = GetNode<SubViewport>("HdrViewport");
         _present = _viewport.GetNode<TextureRect>("Present");
+        _videoBackground = GetNode<Trifle.Video.VideoBackground>("VideoBackground");
         _present.Texture = _hdrViewport.GetTexture();
         _visualizer.SetOutputMaterial((ShaderMaterial)_present.Material);
         GetNode<TextureRect>("Margin/Content/Body/PreviewArea/Preview").Texture =
@@ -102,6 +103,8 @@ public partial class Main : Control
         _quick.AudioClearRequested += ClearAudio;
         _quick.ImageRequested += path => LoadBackgroundImage(path);
         _quick.ImageClearRequested += ClearBackgroundImage;
+        _quick.VideoRequested += path => LoadBackgroundVideo(path);
+        _quick.VideoClearRequested += ClearBackgroundVideo;
         _quick.BackgroundTypeChanged += SetBackgroundType;
         _quick.ColorChanged += SetBackgroundColor;
         _quick.EndColorChanged += color => SetBackgroundGradient((int)_visualizer.Background.Gradient, color);
@@ -121,6 +124,9 @@ public partial class Main : Control
         _backgroundPanel.ColorChanged += SetBackgroundColor;
         _backgroundPanel.FitChanged += SetBackgroundFit;
         _backgroundPanel.AppearanceChanged += SetBackgroundAppearance;
+        _backgroundPanel.VideoChanged += ApplyVideoSettings;
+        _videoBackground.StatusChanged += RefreshVideoStatus;
+        _videoBackground.FrameChanged += _visualizer.SetVideoTexture;
         RefreshBackgroundSettings();
         _notePanel = _settings.GetNode<NoteAppearancePanel>("Margin/Content/Scroll/Groups/Notes/Fields/Content/NoteAppearancePanel");
         _notePanel.AppearanceChanged += ApplyNoteAppearance;
@@ -152,6 +158,7 @@ public partial class Main : Control
         GetWindow().FilesDropped += HandleFilesDropped;
         _infoDialog = GetNode<SongInfoDialog>("SongInfoDialog");
         _exportDialog = GetNode<ExportDialog>("ExportDialog");
+        _exportDialog.FfmpegPathChanged += RefreshBackgroundSettings;
         GetNode<Button>(ui + "Header/Info").Pressed += () => _infoDialog.PopupCentered();
         GetNode<Button>(ui + "Header/Export").Pressed += () =>
         {
@@ -463,6 +470,7 @@ public partial class Main : Control
         SynchronizeAudio(force: true);
         ClearHits();
         RefreshPreview();
+        _videoBackground.SetTime(_playback.TimeSeconds, force: true);
     }
 
     public void PlayPlayback()
@@ -731,10 +739,14 @@ public partial class Main : Control
 
     private void RefreshBackgroundSettings()
     {
-        _backgroundPanel.Refresh(_visualizer.Background, _visualizer.HasBackgroundImage);
-        _quick.RefreshBackground(_visualizer.Background, _visualizer.HasBackgroundImage);
+        _videoBackground.Configure(_visualizer.Background, _exportDialog?.FfmpegPath ?? "ffmpeg", _playback.TimeSeconds);
+        RefreshVideoStatus();
     }
-    private string BackgroundNotice() => _visualizer.BackgroundWarning.Length == 0 ? "" : " · 背景图片不可用，已使用背景色。";
+    private string BackgroundNotice() => _visualizer.Background.Type == BackgroundType.Video &&
+        _visualizer.Background.Video.Path.Length > 0 &&
+        (_videoBackground.Error.Length > 0 || !File.Exists(_visualizer.Background.Video.Path))
+        ? " · 背景视频不可用，已使用底色。" :
+        _visualizer.BackgroundWarning.Length == 0 ? "" : " · 背景图片不可用，已使用背景色。";
 
     public Godot.Collections.Dictionary GetAppearanceInfo() => new()
     {
@@ -781,6 +793,7 @@ public partial class Main : Control
         if (_song == null) return;
         double time = _playback.TimeSeconds;
         _visualizer.SetTime(time);
+        _videoBackground.SetTime(time);
         _timeline.SetValueNoSignal(time);
         bool hours = _playback.DurationSeconds >= 3600;
         _timeLabel.Text = $"{TimeText.Format(time, hours)} / {TimeText.Format(_playback.DurationSeconds, hours)}";
@@ -863,6 +876,7 @@ public partial class Main : Control
         Vector2 oldScale = _visualizer.Scale;
         int oldFps = Engine.MaxFps;
         var oldVsync = DisplayServer.WindowGetVsyncMode();
+        var video = _visualizer.Background.Type == BackgroundType.Video ? _visualizer.Background : null;
         _playback.Pause();
         SynchronizeAudio();
         _exportCancellation = new CancellationTokenSource();
@@ -879,6 +893,10 @@ public partial class Main : Control
                 throw new ArgumentException("导出结束时间不能超过当前播放时长。");
             _exportFrameTime = settings.StartSeconds;
             _exportDialog.Begin(settings, ffmpegPath);
+            if (video != null)
+            {
+                await _videoBackground.BeginExportAsync(settings, ffmpegPath, _exportCancellation.Token);
+            }
             Engine.MaxFps = 0;
             DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
             SetRenderSize(new Vector2I(settings.Width, settings.Height));
@@ -907,11 +925,13 @@ public partial class Main : Control
         finally
         {
             _exportWatch.Stop();
+            if (video != null) await _videoBackground.EndExportAsync();
             _exportCancellation.Dispose();
             _exportCancellation = null;
             if (GodotObject.IsInstanceValid(this) && IsInsideTree())
             {
                 SetRenderSize(oldSize);
+                if (video != null) _videoBackground.Resume(_playback.TimeSeconds);
                 _visualizer.Scale = oldScale;
                 Engine.MaxFps = oldFps;
                 DisplayServer.WindowSetVsyncMode(oldVsync);
@@ -927,6 +947,8 @@ public partial class Main : Control
     private async Task<Image> CaptureFrameAsync(double seconds)
     {
         _exportFrameTime = seconds;
+        if (_visualizer.Background.Type == BackgroundType.Video)
+            await _videoBackground.PresentExportFrameAsync(seconds, _exportCancellation.Token);
         _visualizer.SetTime(seconds);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);

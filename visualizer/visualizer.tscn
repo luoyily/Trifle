@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://visualizer/Visualizer.cs" id="1_visualizer"]
 [ext_resource type="Script" path="res://visualizer/NoteRenderer.cs" id="2_notes"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://visualizer/HitEffects.cs" id="5_hits"]
 [ext_resource type="Shader" path="res://visualizer/hit.gdshader" id="6_hit_shader"]
 [ext_resource type="Script" path="res://visualizer/ParticleEffects.cs" id="7_particles"]
+[ext_resource type="Script" path="res://visualizer/BackgroundLayer.cs" id="8_background"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hit"]
 shader = ExtResource("6_hit_shader")
@@ -31,6 +32,7 @@ script = ExtResource("1_visualizer")
 environment = SubResource("Environment_glow")
 
 [node name="BackgroundImage" type="TextureRect" parent="."]
+script = ExtResource("8_background")
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2

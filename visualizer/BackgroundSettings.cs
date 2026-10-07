@@ -5,15 +5,18 @@ namespace Trifle.Visuals;
 
 public enum BackgroundFit { Contain, Cover }
 public enum BackgroundGradient { Solid, Vertical, Horizontal }
-public enum BackgroundType { Solid, Gradient, Image }
+public enum BackgroundType { Solid, Gradient, Image, Video }
 
 public sealed record BackgroundSettings
 {
     public BackgroundType Type { get; init; }
     public double Opacity { get; init; } = 1;
     public double Brightness { get; init; } = 1;
+    // Gaussian sigma in pixels on the 1920x1080 reference canvas.
+    public double Blur { get; init; }
     public string Color { get; init; } = "0b1320ff";
     public string ImagePath { get; init; } = "";
+    public Trifle.Video.VideoBackgroundSettings Video { get; init; } = new();
     public BackgroundFit Fit { get; init; } = BackgroundFit.Contain;
     public BackgroundGradient Gradient { get; init; }
     public string EndColor { get; init; } = "203551ff";
@@ -21,9 +24,12 @@ public sealed record BackgroundSettings
     public void Validate()
     {
         if (!Enum.IsDefined(Type)) throw new ArgumentException("未知背景类型。");
+        if (Video == null) throw new ArgumentException("视频背景参数不能为空值。");
+        Video.Validate();
         if (!double.IsFinite(Opacity) || Opacity < 0 || Opacity > 1 ||
-            !double.IsFinite(Brightness) || Brightness < 0 || Brightness > 2)
-            throw new ArgumentException("背景透明度 0–1，亮度 0–2。");
+            !double.IsFinite(Brightness) || Brightness < 0 || Brightness > 2 ||
+            !double.IsFinite(Blur) || Blur < 0 || Blur > 40)
+            throw new ArgumentException("背景不透明度 0–1，亮度 0–2，模糊 0–40。");
         VisualSettings.ValidateColor(Color, "背景");
         VisualSettings.ValidateColor(EndColor, "渐变终点");
         if (!Enum.IsDefined(Gradient)) throw new ArgumentException("未知背景渐变方向。");

@@ -14,13 +14,15 @@ public partial class QuickSettingsPanel : VBoxContainer
     public event Action AudioClearRequested;
     public event Action<string> ImageRequested;
     public event Action ImageClearRequested;
+    public event Action<string> VideoRequested;
+    public event Action VideoClearRequested;
     public event Action<int> BackgroundTypeChanged;
     public event Action<Color> ColorChanged;
     public event Action<Color> EndColorChanged;
     private OptionButton _type;
     private ColorPickerButton _color, _endColor;
-    private FileDialog _audioFiles, _imageFiles;
-    private bool _busy, _syncing, _hasMidi, _hasAudio, _hasImage;
+    private FileDialog _audioFiles, _imageFiles, _videoFiles;
+    private bool _busy, _syncing, _hasMidi, _hasAudio, _hasMedia;
 
     public override void _Ready()
     {
@@ -29,10 +31,11 @@ public partial class QuickSettingsPanel : VBoxContainer
         _endColor = GetNode<ColorPickerButton>("Background/Colors/EndColor");
         _audioFiles = GetNode<FileDialog>("AudioFiles");
         _imageFiles = GetNode<FileDialog>("ImageFiles");
+        _videoFiles = GetNode<FileDialog>("VideoFiles");
         _audioFiles.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
         _imageFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyPictures);
-        foreach (string type in new[] { "纯色", "渐变", "图片", "视频（暂不可用）" }) _type.AddItem(type);
-        _type.SetItemDisabled(3, true);
+        _videoFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyVideos);
+        foreach (string type in new[] { "纯色", "渐变", "图片", "视频" }) _type.AddItem(type);
         _type.ItemSelected += v => { if (!_syncing && !_busy) BackgroundTypeChanged?.Invoke((int)v); };
         _color.ColorChanged += c => { if (!_syncing && !_busy) ColorChanged?.Invoke(c); };
         _endColor.ColorChanged += c => { if (!_syncing && !_busy) EndColorChanged?.Invoke(c); };
@@ -40,10 +43,13 @@ public partial class QuickSettingsPanel : VBoxContainer
         GetNode<Button>("Midi/Clear").Pressed += () => { if (!_busy) MidiClearRequested?.Invoke(); };
         GetNode<Button>("Audio/Load").Pressed += () => { if (!_busy) _audioFiles.PopupCenteredRatio(0.7f); };
         GetNode<Button>("Audio/Clear").Pressed += () => { if (!_busy) AudioClearRequested?.Invoke(); };
-        GetNode<Button>("Background/Image/Load").Pressed += () => { if (!_busy) _imageFiles.PopupCenteredRatio(0.7f); };
-        GetNode<Button>("Background/Image/Clear").Pressed += () => { if (!_busy) ImageClearRequested?.Invoke(); };
+        GetNode<Button>("Background/Image/Load").Pressed += () =>
+        { if (!_busy) (_type.Selected == (int)BackgroundType.Video ? _videoFiles : _imageFiles).PopupCenteredRatio(0.7f); };
+        GetNode<Button>("Background/Image/Clear").Pressed += () =>
+        { if (!_busy) { if (_type.Selected == (int)BackgroundType.Video) VideoClearRequested?.Invoke(); else ImageClearRequested?.Invoke(); } };
         _audioFiles.FileSelected += path => { if (!_busy) AudioRequested?.Invoke(path); };
         _imageFiles.FileSelected += path => { if (!_busy) ImageRequested?.Invoke(path); };
+        _videoFiles.FileSelected += path => { if (!_busy) VideoRequested?.Invoke(path); };
         RefreshMidi("", false);
         RefreshAudio(new AudioSettings(), 0, false);
         RefreshBackground(new BackgroundSettings(), false);
@@ -70,17 +76,25 @@ public partial class QuickSettingsPanel : VBoxContainer
         SetBusy(_busy);
     }
 
-    public void RefreshBackground(BackgroundSettings settings, bool available)
+    public void RefreshBackground(BackgroundSettings settings, bool available, bool videoAvailable = false,
+        bool videoLoading = false, string videoError = "")
     {
         _syncing = true;
-        _hasImage = settings.ImagePath.Length > 0;
+        bool video = settings.Type == BackgroundType.Video;
+        bool file = video || settings.Type == BackgroundType.Image;
+        string path = video ? settings.Video.Path : settings.ImagePath;
+        _hasMedia = path.Length > 0;
         _type.Select((int)settings.Type);
         _color.Color = new Color(settings.Color);
         _endColor.Color = new Color(settings.EndColor);
-        GetNode<Control>("Background/Colors").Visible = settings.Type != BackgroundType.Image;
+        GetNode<Control>("Background/Colors").Visible = !file;
         _endColor.Visible = settings.Type == BackgroundType.Gradient;
-        GetNode<Control>("Background/Image").Visible = settings.Type == BackgroundType.Image;
-        FileStatus("Background/Image/File", settings.ImagePath, available, "未选择图片");
+        GetNode<Control>("Background/Image").Visible = file;
+        FileStatus("Background/Image/File", path, video ? videoAvailable || videoLoading : available,
+            video ? "未选择视频" : "未选择图片", video && videoLoading ? " · 载入中" : "");
+        if (video && videoError.Length > 0) GetNode<Label>("Background/Image/File").TooltipText = path + "\n" + videoError;
+        GetNode<Button>("Background/Image/Load").TooltipText = video ? "选择或替换背景视频" : "选择或替换背景图片";
+        GetNode<Button>("Background/Image/Clear").TooltipText = video ? "移除背景视频" : "移除背景图片";
         _syncing = false;
         SetBusy(_busy);
     }
@@ -91,10 +105,10 @@ public partial class QuickSettingsPanel : VBoxContainer
         foreach (string path in new[] { "Midi/Load", "Audio/Load", "Background/Image/Load" }) GetNode<Button>(path).Disabled = busy;
         GetNode<Button>("Midi/Clear").Disabled = busy || !_hasMidi;
         GetNode<Button>("Audio/Clear").Disabled = busy || !_hasAudio;
-        GetNode<Button>("Background/Image/Clear").Disabled = busy || !_hasImage;
+        GetNode<Button>("Background/Image/Clear").Disabled = busy || !_hasMedia;
         _type.Disabled = _color.Disabled = _endColor.Disabled = busy;
     }
 
-    public bool HasOpenPopup() => _audioFiles.Visible || _imageFiles.Visible || _type.GetPopup().Visible ||
+    public bool HasOpenPopup() => _audioFiles.Visible || _imageFiles.Visible || _videoFiles.Visible || _type.GetPopup().Visible ||
         _color.GetPopup().Visible || _endColor.GetPopup().Visible;
 }

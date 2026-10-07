@@ -63,10 +63,12 @@ public static class ProjectStorage
     }
 
     private static Trifle.Visuals.VisualSettings MakeVisualReferences(Trifle.Visuals.VisualSettings visual, string path) =>
-        visual with { Background = visual.Background with { ImagePath = MakeReference(visual.Background.ImagePath, path) } };
+        visual with { Background = visual.Background with { ImagePath = MakeReference(visual.Background.ImagePath, path),
+            Video = visual.Background.Video with { Path = MakeReference(visual.Background.Video.Path, path) } } };
 
     public static Trifle.Visuals.VisualSettings ResolveVisualReferences(Trifle.Visuals.VisualSettings visual, string path) =>
-        visual with { Background = visual.Background with { ImagePath = ResolveReference(visual.Background.ImagePath, path) } };
+        visual with { Background = visual.Background with { ImagePath = ResolveReference(visual.Background.ImagePath, path),
+            Video = visual.Background.Video with { Path = ResolveReference(visual.Background.Video.Path, path) } } };
 
     public static string MakeReference(string resourcePath, string documentPath)
     {
@@ -105,6 +107,16 @@ public static class ProjectStorage
     private static void UpgradeEffectControls(JsonObject visual)
     {
         if (visual == null) return;
+        if (visual["background"] is JsonObject background && background["video"] is JsonObject video)
+        {
+            if (!background.ContainsKey("blur") && video["blur"] != null)
+                background["blur"] = video["blur"].DeepClone();
+            if (video["darkness"] != null && background["type"]?.GetValue<string>() == "Video")
+                background["brightness"] = (background["brightness"]?.GetValue<double>() ?? 1) *
+                    (1 - video["darkness"].GetValue<double>());
+            video.Remove("blur");
+            video.Remove("darkness");
+        }
         UpgradeSidebarSettings(visual);
         if (visual.ContainsKey("effectControlsVersion")) return;
         if (visual["particles"] is JsonObject particles)

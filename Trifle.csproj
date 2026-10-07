@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
+    <Compile Remove="experiments/background_video/checks/**/*.cs" />
     <PackageReference Include="Melanchall.DryWetMidi.Nativeless" Version="8.0.3" />
   </ItemGroup>
 </Project>

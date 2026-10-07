@@ -24,7 +24,7 @@ public static class VideoExporter
         int total = settings.FrameCount;
         var encoding = settings.EffectiveEncoding;
         report(new ExportProgress("checking", 0, total));
-        await RunFfmpegAsync(ffmpegPath, new[] { "-version" }, null, token);
+        await RunFfmpegAsync(ffmpegPath, new[] { "-hide_banner", "-version" }, _ => { }, token);
         string diskRoot = Path.GetPathRoot(settings.OutputPath)!;
         var disk = new DriveInfo(diskRoot);
         if (disk.IsReady && disk.AvailableFreeSpace < 64L * 1024 * 1024)
@@ -38,15 +38,18 @@ public static class VideoExporter
             {
                 "-hide_banner", "-loglevel", "error", "-n", "-nostats", "-progress", "pipe:1",
                 "-f", "rawvideo", "-pixel_format", "rgb24", "-video_size", $"{settings.Width}x{settings.Height}",
-                "-framerate", settings.FramesPerSecond.ToString(), "-i", "pipe:0"
+                "-framerate", settings.FramesPerSecond.ToString()
             };
+            arguments.AddRange(new[] { "-i", "pipe:0" });
+            int audioInput = 1;
             if (audio == null) arguments.AddRange(new[] { "-frames:v", total.ToString(), "-an" });
-            else AddAudioArguments(arguments, settings, audio);
+            else AddAudioArguments(arguments, settings, audio, audioInput, "0:v:0");
+            arguments.AddRange(new[] { "-vf", "scale=out_color_matrix=bt709:out_range=tv" });
             arguments.AddRange(new[]
             {
                 "-c:v", encoding.CodecName, "-preset", encoding.Preset,
                 "-crf", encoding.Crf.ToString(CultureInfo.InvariantCulture),
-                "-vf", "scale=out_color_matrix=bt709:out_range=tv", "-pix_fmt", "yuv420p",
+                "-pix_fmt", "yuv420p",
                 "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "iec61966-2-1",
                 "-color_range", "tv", "-movflags", "+faststart"
             });
@@ -78,7 +81,7 @@ public static class VideoExporter
         using var process = new Process { StartInfo = info };
         if (!process.Start()) throw new IOException("无法启动 FFmpeg。");
         Task<string> errors = process.StandardError.ReadToEndAsync();
-        Task progress = ReadProgressAsync(process.StandardOutput, null);
+        Task progress = ReadOutputAsync(process.StandardOutput, null);
         using var killOnCancel = token.Register(() =>
         {
             try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
@@ -115,7 +118,8 @@ public static class VideoExporter
         }
     }
 
-    private static void AddAudioArguments(List<string> arguments, ExportSettings settings, AudioExportSettings audio)
+    private static void AddAudioArguments(List<string> arguments, ExportSettings settings, AudioExportSettings audio,
+        int audioInput, string videoMap)
     {
         // Match the rendered frame duration, including the rounded-up final frame.
         double duration = settings.FrameCount / (double)settings.FramesPerSecond;
@@ -134,13 +138,13 @@ public static class VideoExporter
             arguments.AddRange(new[] { "-af", filter });
         }
         // Limit by time, rather than -frames:v, so the audio encoder can finish its last packets.
-        arguments.AddRange(new[] { "-map", "0:v:0", "-map", "1:a:0", "-t", Number(duration),
+        arguments.AddRange(new[] { "-map", videoMap, "-map", $"{audioInput}:a:0", "-t", Number(duration),
             "-c:a", "aac", "-b:a", settings.EffectiveEncoding.AudioBitrateKbps.ToString(CultureInfo.InvariantCulture) + "k",
             "-ar", "48000", "-ac", "2" });
     }
 
     private static async Task RunFfmpegAsync(string executable, IEnumerable<string> arguments,
-        Action<int> reportEncodedFrame, CancellationToken token)
+        Action<string> inspectOutput, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
         var info = new ProcessStartInfo(executable)
@@ -152,7 +156,7 @@ public static class VideoExporter
         using var process = new Process { StartInfo = info };
         if (!process.Start()) throw new InvalidOperationException("无法启动 FFmpeg。");
         Task<string> errors = process.StandardError.ReadToEndAsync();
-        Task output = ReadProgressAsync(process.StandardOutput, reportEncodedFrame);
+        Task output = ReadOutputAsync(process.StandardOutput, inspectOutput);
         try { await process.WaitForExitAsync(token); }
         catch (OperationCanceledException)
         {
@@ -166,11 +170,10 @@ public static class VideoExporter
             throw new InvalidOperationException($"FFmpeg 失败（退出码 {process.ExitCode}）：\n" + (await errors).Trim());
     }
 
-    private static async Task ReadProgressAsync(StreamReader reader, Action<int> report)
+    private static async Task ReadOutputAsync(StreamReader reader, Action<string> inspect)
     {
         string line;
         while ((line = await reader.ReadLineAsync()) != null)
-            if (line.StartsWith("frame=", StringComparison.Ordinal) && int.TryParse(line.AsSpan(6).Trim(), out int frame))
-                report?.Invoke(frame);
+            inspect?.Invoke(line);
     }
 }
