@@ -17,25 +17,25 @@ public partial class NoteAppearancePanel : VBoxContainer
     {
         _style = GetNode<EffectSection>("Style");
         _emissionSection = GetNode<EffectSection>("Emission");
-        _shape = GetNode<OptionButton>("Style/Fields/Shape");
+        _shape = GetNode<OptionButton>("Style/Fields/Content/Shape");
         _shape.AddItem("直角矩形");
         _shape.AddItem("圆角矩形");
-        _radius = GetNode<SpinBox>("Style/Fields/Radius/Value");
-        _opacity = GetNode<SpinBox>("Style/Fields/Opacity/Value");
-        _brightness = GetNode<SpinBox>("Style/Fields/Brightness/Value");
-        _emission = GetNode<SpinBox>("Emission/Fields/Strength/Value");
+        _radius = GetNode<SpinBox>("Style/Fields/Content/Radius/Value");
+        _opacity = GetNode<SpinBox>("Style/Fields/Content/Opacity/Value");
+        _brightness = GetNode<SpinBox>("Style/Fields/Content/Brightness/Value");
+        _emission = GetNode<SpinBox>("Emission/Fields/Content/Strength/Value");
         _shape.ItemSelected += shape => Request(_appearance with { Shape = (NoteShape)shape });
         _radius.ValueChanged += value => Request(_appearance with { CornerRadius = value });
         _opacity.ValueChanged += value => Request(_appearance with { Opacity = value / 100 });
         _brightness.ValueChanged += value => Request(_appearance with { Brightness = value });
         _emission.ValueChanged += value => Request(_appearance with { Emission = value });
         _emissionSection.EnabledChanged += enabled => Request(_appearance with { EmissionEnabled = enabled });
-        GetNode<Button>("Style/Fields/Reset").Pressed += () =>
+        GetNode<Button>("Style/Fields/Content/Reset").Pressed += () =>
         {
             var d = new NoteAppearance();
             Request(_appearance with { Shape = d.Shape, CornerRadius = d.CornerRadius, Opacity = d.Opacity, Brightness = d.Brightness });
         };
-        GetNode<Button>("Emission/Fields/Reset").Pressed += () => Request(_appearance with { Emission = new NoteAppearance().Emission });
+        GetNode<Button>("Emission/Fields/Content/Reset").Pressed += () => Request(_appearance with { Emission = new NoteAppearance().Emission });
         Refresh(_appearance);
     }
 

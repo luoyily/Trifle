@@ -10,8 +10,8 @@ public partial class ParticlePanel : VBoxContainer
     private ParticleSettings _settings = new();
     private static readonly ParticleSettings Defaults = new();
     private bool _syncing, _busy;
-    private EffectSection Section(string group) => GetNode<EffectSection>("Fields/" + group);
-    private SpinBox Number(string path) => GetNode<SpinBox>("Fields/" + path.Replace("/", "/Fields/") + "/Value");
+    private EffectSection Section(string group) => GetNode<EffectSection>("Fields/Content/" + group);
+    private SpinBox Number(string path) => GetNode<SpinBox>("Fields/Content/" + path.Replace("/", "/Fields/Content/") + "/Value");
 
     public override void _Ready()
     {
@@ -37,19 +37,19 @@ public partial class ParticlePanel : VBoxContainer
         Bind("Motion/Spread", v => _settings with { LateralSpread = v });
         Bind("Motion/Flow", v => _settings with { FlowStrength = v });
         Bind("Motion/Density", v => _settings with { DensityVariation = v });
-        GetNode<CheckButton>("Fields/Motion/Fields/Beam").Toggled += v => Request(_settings with { Beam = v });
-        GetNode<Button>("Fields/Particles/Fields/Reset").Pressed += () => Request(_settings with
+        GetNode<CheckButton>("Fields/Content/Motion/Fields/Content/Beam").Toggled += v => Request(_settings with { Beam = v });
+        GetNode<Button>("Fields/Content/Particles/Fields/Content/Reset").Pressed += () => Request(_settings with
         {
             Amount = Defaults.Amount, Size = Defaults.Size, Emission = Defaults.Emission,
             Glow = Defaults.Glow, GlowRadius = Defaults.GlowRadius
         });
-        GetNode<Button>("Fields/Curves/Fields/Reset").Pressed += () => Request(_settings with
+        GetNode<Button>("Fields/Content/Curves/Fields/Content/Reset").Pressed += () => Request(_settings with
         {
             CurveLength = Defaults.CurveLength, CurveStrength = Defaults.CurveStrength, CurveWidth = Defaults.CurveWidth,
             CurveDeformation = Defaults.CurveDeformation, CurveChance = Defaults.CurveChance,
             CurveEmission = Defaults.CurveEmission, CurveGlow = Defaults.CurveGlow
         });
-        GetNode<Button>("Fields/Motion/Fields/Reset").Pressed += () => Request(_settings with
+        GetNode<Button>("Fields/Content/Motion/Fields/Content/Reset").Pressed += () => Request(_settings with
         {
             Lifetime = Defaults.Lifetime, Speed = Defaults.Speed, Turbulence = Defaults.Turbulence,
             LateralSpread = Defaults.LateralSpread, FlowStrength = Defaults.FlowStrength,
@@ -82,7 +82,7 @@ public partial class ParticlePanel : VBoxContainer
         Number("Motion/Spread").SetValueNoSignal(settings.LateralSpread);
         Number("Motion/Flow").SetValueNoSignal(settings.FlowStrength);
         Number("Motion/Density").SetValueNoSignal(settings.DensityVariation);
-        GetNode<CheckButton>("Fields/Motion/Fields/Beam").SetPressedNoSignal(settings.Beam);
+        GetNode<CheckButton>("Fields/Content/Motion/Fields/Content/Beam").SetPressedNoSignal(settings.Beam);
         _syncing = false;
         SetBusy(_busy);
     }

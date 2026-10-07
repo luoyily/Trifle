@@ -41,12 +41,12 @@ public partial class SettingsPanel : PanelContainer
             var header = section.GetNode<Button>("Header");
             SectionHeading.Bind(header, section.GetNode<Control>("Fields"), header.Text);
         }
-        const string notes = Groups + "Notes/Fields/";
+        const string notes = Groups + "Notes/Fields/Content/";
         _lookAhead = GetNode<SpinBox>(notes + "LookAhead/Value");
         _colorMode = GetNode<OptionButton>(notes + "ColorMode");
         _colorTarget = GetNode<OptionButton>(notes + "ColorTarget");
         _color = GetNode<ColorPickerButton>(notes + "Color/Value");
-        const string keyboard = Groups + "Keyboard/Fields/";
+        const string keyboard = Groups + "Keyboard/Fields/Content/";
         _firstPitch = GetNode<SpinBox>(keyboard + "FirstPitch/Value");
         _lastPitch = GetNode<SpinBox>(keyboard + "LastPitch/Value");
         _rangeSummary = GetNode<Label>(keyboard + "Summary");
@@ -90,6 +90,32 @@ public partial class SettingsPanel : PanelContainer
     }
 
     public void Bind(Visualizer visualizer) => _visualizer = visualizer;
+
+    private System.Collections.Generic.IEnumerable<Button> FoldButtons(Node node)
+    {
+        foreach (Node child in node.GetChildren())
+        {
+            if (child is Button button && button.ToggleMode &&
+                button.ThemeTypeVariation.ToString() is "SectionHeader" or "EffectHeader" or
+                    "SubsectionHeader" or "NestedEffectHeader") yield return button;
+            foreach (var nested in FoldButtons(child)) yield return nested;
+        }
+    }
+
+    // Layout-only inset containers do not change saved section identities.
+    private string SectionKey(Button button) => GetPathTo(button).ToString()
+        .Replace("/EffectsInset/Groups/", "/").Replace("/Fields/Content/", "/Fields/");
+
+    public System.Collections.Generic.Dictionary<string, bool> CaptureExpandedSections() =>
+        FoldButtons(this).ToDictionary(SectionKey, button => button.ButtonPressed);
+
+    public void RestoreExpandedSections(System.Collections.Generic.Dictionary<string, bool> expanded)
+    {
+        foreach (var button in FoldButtons(this))
+            button.ButtonPressed = expanded.TryGetValue(SectionKey(button), out bool open) && open;
+    }
+
+    public void CollapseSection(string name) => GetNode<Button>(Groups + name + "/Header").ButtonPressed = false;
 
     public void SetSong(MidiSong song)
     {

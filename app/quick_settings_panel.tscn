@@ -1,0 +1,169 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://app/QuickSettingsPanel.cs" id="1"]
+
+[node name="QuickSettingsPanel" type="VBoxContainer"]
+script = ExtResource("1")
+theme_override_constants/separation = 8
+
+[node name="Midi" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="Midi"]
+layout_mode = 2
+text = "MIDI"
+custom_minimum_size = Vector2(44, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="File" type="Label" parent="Midi"]
+layout_mode = 2
+text = "未选择文件"
+size_flags_horizontal = 3
+clip_text = true
+text_overrun_behavior = 3
+custom_minimum_size = Vector2(40, 0)
+
+[node name="Load" type="Button" parent="Midi"]
+layout_mode = 2
+text = "选择…"
+theme_type_variation = &"QuietButton"
+tooltip_text = "选择或替换MIDI文件"
+
+[node name="Clear" type="Button" parent="Midi"]
+layout_mode = 2
+text = "×"
+theme_type_variation = &"QuietButton"
+custom_minimum_size = Vector2(28, 32)
+tooltip_text = "移除 MIDI 和关联音频"
+
+[node name="Audio" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="Audio"]
+layout_mode = 2
+text = "音频"
+custom_minimum_size = Vector2(44, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="File" type="Label" parent="Audio"]
+layout_mode = 2
+text = "未选择文件"
+size_flags_horizontal = 3
+clip_text = true
+text_overrun_behavior = 3
+custom_minimum_size = Vector2(40, 0)
+
+[node name="Load" type="Button" parent="Audio"]
+layout_mode = 2
+text = "选择…"
+theme_type_variation = &"QuietButton"
+tooltip_text = "选择或替换音频文件"
+
+[node name="Clear" type="Button" parent="Audio"]
+layout_mode = 2
+text = "×"
+theme_type_variation = &"QuietButton"
+custom_minimum_size = Vector2(28, 32)
+tooltip_text = "移除音频"
+
+[node name="Background" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="Background"]
+layout_mode = 2
+text = "背景"
+custom_minimum_size = Vector2(44, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="Type" type="OptionButton" parent="Background"]
+layout_mode = 2
+custom_minimum_size = Vector2(78, 32)
+fit_to_longest_item = false
+
+[node name="Colors" type="HBoxContainer" parent="Background"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Color" type="ColorPickerButton" parent="Background/Colors"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 32)
+size_flags_horizontal = 3
+edit_alpha = false
+tooltip_text = "背景色 / 渐变起点"
+
+[node name="EndColor" type="ColorPickerButton" parent="Background/Colors"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 32)
+size_flags_horizontal = 3
+edit_alpha = false
+tooltip_text = "渐变终点"
+
+[node name="Image" type="HBoxContainer" parent="Background"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="File" type="Label" parent="Background/Image"]
+layout_mode = 2
+text = "未选择图片"
+size_flags_horizontal = 3
+clip_text = true
+text_overrun_behavior = 3
+custom_minimum_size = Vector2(30, 0)
+
+[node name="Load" type="Button" parent="Background/Image"]
+layout_mode = 2
+text = "选择…"
+theme_type_variation = &"QuietButton"
+tooltip_text = "选择或替换背景图片"
+
+[node name="Clear" type="Button" parent="Background/Image"]
+layout_mode = 2
+text = "×"
+theme_type_variation = &"QuietButton"
+custom_minimum_size = Vector2(28, 32)
+tooltip_text = "移除背景图片"
+
+[node name="Score" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="Score"]
+layout_mode = 2
+text = "乐谱"
+custom_minimum_size = Vector2(44, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="File" type="Label" parent="Score"]
+layout_mode = 2
+text = "暂不可用"
+size_flags_horizontal = 3
+theme_type_variation = &"HelpLabel"
+
+[node name="Load" type="Button" parent="Score"]
+layout_mode = 2
+text = "选择…"
+theme_type_variation = &"QuietButton"
+disabled = true
+tooltip_text = "MuseScore 乐谱支持将在后续版本加入"
+
+[node name="AudioFiles" type="FileDialog" parent="."]
+layout_mode = 2
+title = "选择外部音频"
+size = Vector2i(800, 500)
+file_mode = 0
+access = 2
+use_native_dialog = true
+filters = PackedStringArray("*.ogg,*.mp3,*.wav ; 音频（OGG / MP3 / WAV）")
+
+[node name="ImageFiles" type="FileDialog" parent="."]
+layout_mode = 2
+title = "选择背景图片"
+size = Vector2i(800, 500)
+file_mode = 0
+access = 2
+use_native_dialog = true
+filters = PackedStringArray("*.png,*.jpg,*.jpeg,*.webp ; 图片文件")

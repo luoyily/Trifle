@@ -23,7 +23,8 @@ public partial class Visualizer : Node2D
     private BackgroundSettings _background = new();
     private NoteAppearance _noteAppearance = new();
     private GlowSettings _glow = new();
-    private LightEffectsSettings _lights = new();
+    private KeyboardLightSettings _keyboardLights = new();
+    private ContactLineSettings _contactLine = new();
     private HitEffects _hits;
     private ParticleEffects _particles;
     private ParticleSettings _particleSettings = new();
@@ -33,12 +34,13 @@ public partial class Visualizer : Node2D
     private readonly Godot.Collections.Array<Vector4> _keyLightSources = new();
     private readonly Godot.Collections.Array<Vector4> _keyLightColors = new();
     public string BackgroundWarning { get; private set; } = "";
-    public bool HasBackgroundImage => _backgroundImage.Texture != null;
+    public bool HasBackgroundImage => _background.Type == BackgroundType.Image && _backgroundImage.Texture != null;
     public KeyboardAppearance KeyboardAppearance => _appearance;
     public BackgroundSettings Background => _background;
     public NoteAppearance NoteAppearance => _noteAppearance;
     public GlowSettings Glow => _glow;
-    public LightEffectsSettings Lights => _lights;
+    public KeyboardLightSettings KeyboardLights => _keyboardLights;
+    public ContactLineSettings ContactLine => _contactLine;
     public ParticleSettings Particles => _particleSettings;
 
     public override void _Ready()
@@ -72,9 +74,9 @@ public partial class Visualizer : Node2D
         if (!double.IsFinite(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
         _time = Math.Max(0, seconds);
         _keyboard.UpdateAt(_song, _time, _colors);
-        _notes.SetNearLight(_lights, _keyboardBounds.Position.Y, _keyboard.ActiveKeyCount > 0);
+        _notes.SetNearLight(_keyboardLights, _keyboardBounds.Position.Y, _keyboard.ActiveKeyCount > 0);
         _notes.UpdateAt(_song, _layout, _keyboardBounds, _time, Math.Max(0.1, LookAheadSeconds), _colors);
-        _hits.UpdateAt(_layout, _keyboardBounds, _time, _keyboard, _lights);
+        _hits.UpdateAt(_layout, _keyboardBounds, _time, _keyboard, _keyboardLights, _contactLine);
         _particles.UpdateAt(_layout, _keyboardBounds, _time, _colors);
         UpdateKeyboardAreaLight();
     }
@@ -105,8 +107,8 @@ public partial class Visualizer : Node2D
         _outputMaterial.SetShaderParameter("key_light_colors", _keyLightColors);
         _outputMaterial.SetShaderParameter("key_light_count", n);
         _outputMaterial.SetShaderParameter("white_key_width", whiteWidth);
-        _outputMaterial.SetShaderParameter("key_light_radius", _lights.KeyLightRadius);
-        _outputMaterial.SetShaderParameter("key_light_strength", _lights.KeyLightEnabled ? _lights.KeyLightStrength : 0);
+        _outputMaterial.SetShaderParameter("key_light_radius", _keyboardLights.KeyLightRadius);
+        _outputMaterial.SetShaderParameter("key_light_strength", _keyboardLights.KeyLightEnabled ? _keyboardLights.KeyLightStrength : 0);
     }
 
     public int GetColorMode() => (int)_colors.Mode;
@@ -167,11 +169,18 @@ public partial class Visualizer : Node2D
         _environment.GlowIntensity = (float)settings.Intensity;
     }
 
-    public void SetLightEffects(LightEffectsSettings settings)
+    public void SetKeyboardLights(KeyboardLightSettings settings)
     {
         settings.Validate();
-        _lights = settings;
+        _keyboardLights = settings;
         _keyboard.SetLightSettings(settings);
+        SetTime(_time);
+    }
+
+    public void SetContactLine(ContactLineSettings settings)
+    {
+        settings.Validate();
+        _contactLine = settings;
         SetTime(_time);
     }
 
@@ -222,8 +231,10 @@ public partial class Visualizer : Node2D
         _backgroundImage.Texture = texture;
         _backgroundImage.StretchMode = settings.Fit == BackgroundFit.Contain
             ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.KeepAspectCovered;
+        _backgroundImage.Visible = settings.Type == BackgroundType.Image;
+        _backgroundImage.Modulate = new Color((float)settings.Brightness, (float)settings.Brightness, (float)settings.Brightness, (float)settings.Opacity);
         _background = settings;
-        BackgroundWarning = warning;
+        BackgroundWarning = settings.Type == BackgroundType.Image ? warning : "";
         if (previous != texture) previous?.Dispose();
         QueueRedraw();
     }
@@ -234,7 +245,7 @@ public partial class Visualizer : Node2D
         ColorMode = _colors.Mode,
         ChannelColors = Enumerable.Range(0, 16).ToDictionary(index => index, index => _colors.GetChannelColor(index).ToHtml()),
         TrackColors = Enumerable.Range(0, _song?.Tracks.Length ?? 0).ToDictionary(index => index, index => _colors.GetTrackColor(index).ToHtml()),
-        Keyboard = _appearance, Background = _background, Note = _noteAppearance, Glow = _glow, Lights = _lights,
+        Keyboard = _appearance, Background = _background, Note = _noteAppearance, Glow = _glow, KeyboardLights = _keyboardLights, ContactLine = _contactLine,
         Particles = _particleSettings
     };
 
@@ -249,7 +260,8 @@ public partial class Visualizer : Node2D
         LookAheadSeconds = settings.LookAheadSeconds;
         SetNoteAppearance(settings.Note);
         SetGlow(settings.Glow);
-        SetLightEffects(settings.Lights);
+        SetKeyboardLights(settings.KeyboardLights);
+        SetContactLine(settings.ContactLine);
         SetParticles(settings.Particles);
         SetKeyboardAppearance(settings.Keyboard);
         _colors.ResetChannels();
@@ -268,9 +280,17 @@ public partial class Visualizer : Node2D
 
     public override void _Draw()
     {
-        var first = new Color(_background.Color);
-        var last = new Color(_background.EndColor);
-        if (_background.Gradient == BackgroundGradient.Solid)
+        // Fade backgrounds toward black, independent of the engine's default clear color.
+        DrawRect(new Rect2(0, 0, 1920, 1080), Colors.Black);
+        Color Appearance(string hex)
+        {
+            var color = new Color(hex);
+            return new Color(color.R * (float)_background.Brightness, color.G * (float)_background.Brightness,
+                color.B * (float)_background.Brightness, color.A * (float)_background.Opacity);
+        }
+        var first = Appearance(_background.Color);
+        var last = Appearance(_background.EndColor);
+        if (_background.Type == BackgroundType.Solid || _background.Gradient == BackgroundGradient.Solid)
             DrawRect(new Rect2(0, 0, 1920, 1080), first);
         else
             DrawPolygon(new[] { Vector2.Zero, new Vector2(1920, 0), new Vector2(1920, 1080), new Vector2(0, 1080) },

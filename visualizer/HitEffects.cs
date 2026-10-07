@@ -8,7 +8,7 @@ public partial class HitEffects : Node2D
     private KeyboardLayout _layout;
     private Rect2 _keyboard;
     private PianoKeyboard _keys;
-    private LightEffectsSettings _settings = new();
+    private KeyboardLightSettings _lights = new();
     private TextureRect _line;
     private ShaderMaterial _lineMaterial;
     private readonly Godot.Collections.Array<Vector4> _sources = new();
@@ -37,9 +37,9 @@ public partial class HitEffects : Node2D
         return texture;
     }
 
-    public void UpdateAt(KeyboardLayout layout, Rect2 keyboard, double time, PianoKeyboard keys, LightEffectsSettings settings)
+    public void UpdateAt(KeyboardLayout layout, Rect2 keyboard, double time, PianoKeyboard keys, KeyboardLightSettings lights, ContactLineSettings settings)
     {
-        _layout = layout; _keyboard = keyboard; _keys = keys; _settings = settings;
+        _layout = layout; _keyboard = keyboard; _keys = keys; _lights = lights;
         _line.Position = new Vector2(keyboard.Position.X, keyboard.Position.Y - 64);
         _line.Size = new Vector2(keyboard.Size.X, 96);
         _line.Visible = (settings.LineEnabled && settings.LineEmission > 0) || (settings.HaloEnabled && settings.HaloEmission > 0);
@@ -87,7 +87,7 @@ public partial class HitEffects : Node2D
     public override void _Draw()
     {
         VisibleHits = 0;
-        if (_layout == null || !_settings.HitEnabled || _settings.HitEmission == 0) return;
+        if (_layout == null || !_lights.HitEnabled || _lights.HitEmission == 0) return;
         foreach (var key in _layout.Keys)
         {
             float strength = _keys.GetLightStrength(key.Pitch);
@@ -95,7 +95,7 @@ public partial class HitEffects : Node2D
             float width = (float)key.Width * _keyboard.Size.X;
             float x = _keyboard.Position.X + (float)(key.Left + key.Width / 2) * _keyboard.Size.X;
             Color color = _keys.GetLightColor(key.Pitch);
-            float energy = (float)_settings.HitEmission * strength * 1.4f;
+            float energy = (float)_lights.HitEmission * strength * 1.4f;
             color = new Color(color.R * energy, color.G * energy, color.B * energy, color.A * 0.8f);
             float height = key.IsBlack ? 34 : 46;
             float spread = width * (key.IsBlack ? 1.55f : 1.9f);

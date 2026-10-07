@@ -1,0 +1,51 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://app/GlowPanel.cs" id="1"]
+[ext_resource type="PackedScene" path="res://app/effect_section.tscn" id="2"]
+[ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
+
+[node name="GlowPanel" instance=ExtResource("2")]
+script = ExtResource("1")
+Title = "全局泛光"
+HeadingStyle = &"SectionHeader"
+
+[node name="Strength" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("ui_parameter")
+
+[node name="Label" type="Label" parent="Fields/Content/Strength"]
+layout_mode = 2
+size_flags_horizontal = 0
+autowrap_mode = 3
+text = "光晕强度"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+
+[node name="Slider" type="HSlider" parent="Fields/Content/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Fields/Content/Strength"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 0
+max_value = 3
+step = 0.01
+value = 1
+alignment = 2
+select_all_on_focus = true
+
+[node name="Help" type="Label" parent="Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "为画面中较亮的效果添加光晕，影响所有发光效果。"
+theme_type_variation = &"HelpLabel"
+
+[node name="Reset" type="Button" parent="Fields/Content"]
+layout_mode = 2
+text = "恢复参数"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 0
+tooltip_text = "恢复全局光晕参数"

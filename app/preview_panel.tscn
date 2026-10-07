@@ -13,18 +13,22 @@ theme_type_variation = &"SectionHeader"
 custom_minimum_size = Vector2(0, 34)
 flat = false
 
-[node name="Fields" type="VBoxContainer" parent="."]
+[node name="Fields" type="MarginContainer" parent="."]
 visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Fields"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Size" type="OptionButton" parent="Fields"]
+[node name="Size" type="OptionButton" parent="Fields/Content"]
 layout_mode = 2
 
-[node name="Fps" type="OptionButton" parent="Fields"]
+[node name="Fps" type="OptionButton" parent="Fields/Content"]
 layout_mode = 2
 
-[node name="Help" type="Label" parent="Fields"]
+[node name="Help" type="Label" parent="Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "降低预览规格可减少显卡负担。F10 将窗口调整为 16:9；F11 全屏。导出使用独立的分辨率和帧率。"

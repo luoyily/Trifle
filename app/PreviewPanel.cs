@@ -14,9 +14,9 @@ public partial class PreviewPanel : VBoxContainer
     public override void _Ready()
     {
         var header = GetNode<Button>("Header");
-        SectionHeading.Bind(header, GetNode<Control>("Fields"), "预览");
-        _size = GetNode<OptionButton>("Fields/Size");
-        _fps = GetNode<OptionButton>("Fields/Fps");
+        SectionHeading.Bind(header, GetNode<Control>("Fields"), "预览分辨率");
+        _size = GetNode<OptionButton>("Fields/Content/Size");
+        _fps = GetNode<OptionButton>("Fields/Content/Fps");
         foreach (int height in Heights) _size.AddItem(height == 2160 ? "4K · 3840 × 2160" : $"{height}p · {height * 16 / 9} × {height}");
         foreach (int fps in Rates) _fps.AddItem($"{fps} FPS");
         _size.ItemSelected += _ => Request();

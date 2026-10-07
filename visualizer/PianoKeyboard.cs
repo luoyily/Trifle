@@ -17,7 +17,7 @@ public partial class PianoKeyboard : Node2D
     private Color _white = new("e8e9e6");
     private Color _black = new("202329");
     private MidiNoteIndex _index;
-    private LightEffectsSettings _settings = new();
+    private KeyboardLightSettings _settings = new();
     private MultiMeshInstance2D _whiteKeys, _blackKeys;
     private ShaderMaterial _material;
     private Node2D _labels;
@@ -60,7 +60,7 @@ public partial class PianoKeyboard : Node2D
     }
 
     public void SetSong(MidiSong song) => _index = new MidiNoteIndex(song.Notes);
-    public void SetLightSettings(LightEffectsSettings settings)
+    public void SetLightSettings(KeyboardLightSettings settings)
     {
         _settings = settings;
         _material.SetShaderParameter("key_emission", settings.KeyboardEnabled ? settings.KeyboardEmission : 0);

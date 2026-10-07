@@ -8,7 +8,7 @@ public partial class NoteRenderer : MultiMeshInstance2D
     public int VisibleNoteCount { get; private set; }
     private MidiNoteIndex _index;
 
-    public void SetNearLight(LightEffectsSettings settings, double keyboardY, bool active)
+    public void SetNearLight(KeyboardLightSettings settings, double keyboardY, bool active)
     {
         var material = (ShaderMaterial)Material;
         material.SetShaderParameter("near_strength", active && settings.NearEnabled ? settings.NearStrength : 0);

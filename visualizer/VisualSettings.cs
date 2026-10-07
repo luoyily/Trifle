@@ -7,7 +7,7 @@ namespace Trifle.Visuals;
 // Plain values shared by project files and visual presets; no scene nodes are serialized.
 public sealed record VisualSettings
 {
-    public int EffectControlsVersion { get; init; } = 1;
+    public int EffectControlsVersion { get; init; } = 2;
     public int FirstPitch { get; init; } = 21;
     public int LastPitch { get; init; } = 108;
     public double LookAheadSeconds { get; init; } = 6;
@@ -18,12 +18,13 @@ public sealed record VisualSettings
     public BackgroundSettings Background { get; init; } = new();
     public NoteAppearance Note { get; init; } = new();
     public GlowSettings Glow { get; init; } = new();
-    public LightEffectsSettings Lights { get; init; } = new();
+    public KeyboardLightSettings KeyboardLights { get; init; } = new();
+    public ContactLineSettings ContactLine { get; init; } = new();
     public ParticleSettings Particles { get; init; } = new();
 
     public void Validate(int? trackCount = null)
     {
-        if (EffectControlsVersion != 1) throw new ArgumentException("不支持的特效设置版本。");
+        if (EffectControlsVersion != 2) throw new ArgumentException("不支持的特效设置版本。");
         if (FirstPitch < 0 || LastPitch > 127 || FirstPitch > LastPitch)
             throw new ArgumentException("琴键范围需要满足 0 ≤ 最低音 ≤ 最高音 ≤ 127。");
         if (!double.IsFinite(LookAheadSeconds) || LookAheadSeconds < 1 || LookAheadSeconds > 12)
@@ -39,8 +40,9 @@ public sealed record VisualSettings
         if (Note == null || Glow == null) throw new ArgumentException("音符和 Glow 参数不能为空值。");
         Note.Validate();
         Glow.Validate();
-        if (Lights == null) throw new ArgumentException("琴键与接触效果参数不能为空值。");
-        Lights.Validate();
+        if (KeyboardLights == null || ContactLine == null) throw new ArgumentException("键盘灯光和接触线参数不能为空值。");
+        KeyboardLights.Validate();
+        ContactLine.Validate();
         if (Particles == null) throw new ArgumentException("粒子参数不能为空值。");
         Particles.Validate();
     }

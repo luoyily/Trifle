@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://app/BackgroundPanel.cs" id="1"]
+
+[ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
 
 [node name="BackgroundPanel" type="VBoxContainer"]
 theme_override_constants/separation = 12
@@ -16,75 +18,91 @@ theme_type_variation = &"SectionHeader"
 custom_minimum_size = Vector2(0, 34)
 flat = false
 
-[node name="Fields" type="VBoxContainer" parent="."]
+[node name="Fields" type="MarginContainer" parent="."]
 visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Fields"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Color" type="HBoxContainer" parent="Fields"]
+[node name="Color" type="HBoxContainer" parent="Fields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Fields/Color"]
+[node name="Label" type="Label" parent="Fields/Content/Color"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "背景色"
+text = "留白填充色"
 
-[node name="Value" type="ColorPickerButton" parent="Fields/Color"]
+[node name="Value" type="ColorPickerButton" parent="Fields/Content/Color"]
 layout_mode = 2
 custom_minimum_size = Vector2(100, 32)
 edit_alpha = false
 
-[node name="Gradient" type="OptionButton" parent="Fields"]
+[node name="Gradient" type="OptionButton" parent="Fields/Content"]
 layout_mode = 2
 
-[node name="EndColor" type="HBoxContainer" parent="Fields"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Fields/EndColor"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "渐变终点色"
-
-[node name="Value" type="ColorPickerButton" parent="Fields/EndColor"]
-layout_mode = 2
-custom_minimum_size = Vector2(80, 32)
-
-[node name="Image" type="Label" parent="Fields"]
-layout_mode = 2
-text = "未选择图片"
-text_overrun_behavior = 3
-
-[node name="Actions" type="HBoxContainer" parent="Fields"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Load" type="Button" parent="Fields/Actions"]
-layout_mode = 2
-text = "选择图片…"
-theme_type_variation = &"QuietButton"
-size_flags_horizontal = 0
-
-[node name="Clear" type="Button" parent="Fields/Actions"]
-layout_mode = 2
-text = "移除图片"
-theme_type_variation = &"QuietButton"
-size_flags_horizontal = 0
-
-[node name="Fit" type="OptionButton" parent="Fields"]
+[node name="Fit" type="OptionButton" parent="Fields/Content"]
 layout_mode = 2
 clip_text = true
 
-[node name="Help" type="Label" parent="Fields"]
+[node name="Help" type="Label" parent="Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
-text = "图片保持比例并居中显示。\n支持 PNG、JPEG、WebP；预览和视频使用相同填充规则。"
+text = "背景颜色和文件在快速设置中选择；透明度与亮度同时用于预览和导出。"
 theme_type_variation = &"HelpLabel"
 
-[node name="Files" type="FileDialog" parent="."]
-title = "选择背景图片"
-size = Vector2i(800, 500)
-file_mode = 0
-access = 2
-filters = PackedStringArray("*.png,*.jpg,*.jpeg,*.webp ; 图片文件")
-use_native_dialog = true
+[node name="Opacity" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+script = ExtResource("ui_parameter")
+theme_override_constants/separation = 8
 
+[node name="Label" type="Label" parent="Fields/Content/Opacity"]
+layout_mode = 2
+text = "透明度"
+custom_minimum_size = Vector2(108, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="Slider" type="HSlider" parent="Fields/Content/Opacity"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(54, 32)
+size_flags_vertical = 4
+scrollable = false
+
+[node name="Value" type="SpinBox" parent="Fields/Content/Opacity"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+max_value = 1
+step = 0.01
+value = 1
+alignment = 2
+select_all_on_focus = true
+
+[node name="Brightness" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+script = ExtResource("ui_parameter")
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Fields/Content/Brightness"]
+layout_mode = 2
+text = "亮度"
+custom_minimum_size = Vector2(108, 0)
+theme_type_variation = &"MutedLabel"
+
+[node name="Slider" type="HSlider" parent="Fields/Content/Brightness"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(54, 32)
+size_flags_vertical = 4
+scrollable = false
+
+[node name="Value" type="SpinBox" parent="Fields/Content/Brightness"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+max_value = 2
+step = 0.01
+value = 1
+alignment = 2
+select_all_on_focus = true

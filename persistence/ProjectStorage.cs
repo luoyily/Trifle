@@ -104,7 +104,9 @@ public static class ProjectStorage
     // then carry explicit independent states without overwriting their values.
     private static void UpgradeEffectControls(JsonObject visual)
     {
-        if (visual == null || visual.ContainsKey("effectControlsVersion")) return;
+        if (visual == null) return;
+        UpgradeSidebarSettings(visual);
+        if (visual.ContainsKey("effectControlsVersion")) return;
         if (visual["particles"] is JsonObject particles)
         {
             particles["curves"] = (particles["enabled"]?.GetValue<bool>() ?? false)
@@ -120,7 +122,42 @@ public static class ProjectStorage
             lights["nearEnabled"] = (lights["keyboardEmission"]?.GetValue<double>() ?? 0) > 0;
         }
         visual["effectControlsVersion"] = 1;
+        UpgradeSidebarSettings(visual);
     }
+    private static void UpgradeSidebarSettings(JsonObject visual)
+    {
+        if (visual["background"] is JsonObject background && !background.ContainsKey("type"))
+        {
+            bool image = !string.IsNullOrEmpty(background["imagePath"]?.GetValue<string>());
+            string gradient = background["gradient"]?.GetValue<string>();
+            background["type"] = image ? "Image" : gradient is "Vertical" or "Horizontal" ? "Gradient" : "Solid";
+        }
+        // Let the older brightness/switch migration run before splitting its source record.
+        if (visual["effectControlsVersion"]?.GetValue<int>() != 1) return;
+        if (visual["lights"] is JsonObject lights)
+        {
+            var keyboard = new JsonObject();
+            var line = new JsonObject();
+            foreach (var field in lights)
+            {
+                if (KeyboardLightFields.Contains(field.Key)) keyboard[field.Key] = field.Value?.DeepClone();
+                else if (ContactLineFields.Contains(field.Key)) line[field.Key] = field.Value?.DeepClone();
+            }
+            if (!visual.ContainsKey("keyboardLights")) visual["keyboardLights"] = keyboard;
+            if (!visual.ContainsKey("contactLine")) visual["contactLine"] = line;
+            visual.Remove("lights");
+        }
+        visual["effectControlsVersion"] = 2;
+    }
+
+    private static readonly System.Collections.Generic.HashSet<string> KeyboardLightFields = new()
+    {
+        "keyboardEnabled", "hitEnabled", "nearEnabled", "keyLightEnabled", "keyboardEmission", "hitEmission", "hitDecay", "nearStrength", "nearDistance", "keyLightStrength", "keyLightRadius"
+    };
+    private static readonly System.Collections.Generic.HashSet<string> ContactLineFields = new()
+    {
+        "lineEnabled", "haloEnabled", "haloEmission", "lineColor", "haloColor", "haloFollowsLine", "tintWithNotes", "lineContactBoost", "lineEmission", "lineWidth", "lineWave", "lineCoreWidth"
+    };
 
     private static void WriteAtomic<T>(string path, T data)
     {

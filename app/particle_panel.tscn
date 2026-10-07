@@ -17,22 +17,26 @@ theme_type_variation = &"SectionHeader"
 custom_minimum_size = Vector2(0, 34)
 flat = false
 
-[node name="Fields" type="VBoxContainer" parent="."]
+[node name="Fields" type="MarginContainer" parent="."]
 visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Fields"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Particles" parent="Fields" instance=ExtResource("2")]
+[node name="Particles" parent="Fields/Content" instance=ExtResource("2")]
 layout_mode = 2
 Title = "粒子"
 HasSwitch = true
 
-[node name="Amount" type="HBoxContainer" parent="Fields/Particles/Fields"]
+[node name="Amount" type="HBoxContainer" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Particles/Fields/Amount"]
+[node name="Label" type="Label" parent="Fields/Content/Particles/Fields/Content/Amount"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -40,13 +44,13 @@ text = "每秒粒子数"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Particles/Fields/Amount"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Particles/Fields/Content/Amount"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Particles/Fields/Amount"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Particles/Fields/Content/Amount"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 8
@@ -56,12 +60,12 @@ value = 40
 alignment = 2
 select_all_on_focus = true
 
-[node name="Size" type="HBoxContainer" parent="Fields/Particles/Fields"]
+[node name="Size" type="HBoxContainer" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Particles/Fields/Size"]
+[node name="Label" type="Label" parent="Fields/Content/Particles/Fields/Content/Size"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -69,13 +73,13 @@ text = "尺寸（像素）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Particles/Fields/Size"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Particles/Fields/Content/Size"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Particles/Fields/Size"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Particles/Fields/Content/Size"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 1
@@ -85,12 +89,12 @@ value = 4.8
 alignment = 2
 select_all_on_focus = true
 
-[node name="Emission" type="HBoxContainer" parent="Fields/Particles/Fields"]
+[node name="Emission" type="HBoxContainer" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Particles/Fields/Emission"]
+[node name="Label" type="Label" parent="Fields/Content/Particles/Fields/Content/Emission"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -98,13 +102,13 @@ text = "发光强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Particles/Fields/Emission"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Particles/Fields/Content/Emission"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Particles/Fields/Emission"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Particles/Fields/Content/Emission"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -114,12 +118,12 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Glow" type="HBoxContainer" parent="Fields/Particles/Fields"]
+[node name="Glow" type="HBoxContainer" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Particles/Fields/Glow"]
+[node name="Label" type="Label" parent="Fields/Content/Particles/Fields/Content/Glow"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -127,13 +131,13 @@ text = "柔光强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Particles/Fields/Glow"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Particles/Fields/Content/Glow"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Particles/Fields/Glow"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Particles/Fields/Content/Glow"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -143,12 +147,12 @@ value = 0.85
 alignment = 2
 select_all_on_focus = true
 
-[node name="GlowRadius" type="HBoxContainer" parent="Fields/Particles/Fields"]
+[node name="GlowRadius" type="HBoxContainer" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Particles/Fields/GlowRadius"]
+[node name="Label" type="Label" parent="Fields/Content/Particles/Fields/Content/GlowRadius"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -156,13 +160,13 @@ text = "柔光范围（倍）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Particles/Fields/GlowRadius"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Particles/Fields/Content/GlowRadius"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Particles/Fields/GlowRadius"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Particles/Fields/Content/GlowRadius"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 1
@@ -172,30 +176,30 @@ value = 2.4
 alignment = 2
 select_all_on_focus = true
 
-[node name="Help" type="Label" parent="Fields/Particles/Fields"]
+[node name="Help" type="Label" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "圆点粒子独立启停。尺寸按 1080p 画面计算。"
 theme_type_variation = &"HelpLabel"
 
-[node name="Reset" type="Button" parent="Fields/Particles/Fields"]
+[node name="Reset" type="Button" parent="Fields/Content/Particles/Fields/Content"]
 layout_mode = 2
 text = "恢复参数"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复粒子参数"
 
-[node name="Curves" parent="Fields" instance=ExtResource("2")]
+[node name="Curves" parent="Fields/Content" instance=ExtResource("2")]
 layout_mode = 2
 Title = "流线"
 HasSwitch = true
 
-[node name="Chance" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Chance" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Chance"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Chance"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -203,13 +207,13 @@ text = "出现概率（%）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Chance"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Chance"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Chance"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Chance"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -219,12 +223,12 @@ value = 55
 alignment = 2
 select_all_on_focus = true
 
-[node name="Length" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Length" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Length"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Length"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -232,13 +236,13 @@ text = "长度系数"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Length"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Length"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Length"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Length"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0.2
@@ -248,12 +252,12 @@ value = 0.65
 alignment = 2
 select_all_on_focus = true
 
-[node name="Width" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Width" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Width"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Width"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -261,13 +265,13 @@ text = "粗细（像素）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Width"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Width"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Width"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Width"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 1
@@ -277,12 +281,12 @@ value = 6
 alignment = 2
 select_all_on_focus = true
 
-[node name="Strength" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Strength" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Strength"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Strength"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -290,13 +294,13 @@ text = "亮度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Strength"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Strength"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Strength"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Strength"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -306,12 +310,12 @@ value = 0.7
 alignment = 2
 select_all_on_focus = true
 
-[node name="Emission" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Emission" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Emission"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Emission"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -319,13 +323,13 @@ text = "发光强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Emission"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Emission"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Emission"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Emission"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -335,12 +339,12 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Glow" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Glow" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Glow"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Glow"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -348,13 +352,13 @@ text = "柔光强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Glow"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Glow"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Glow"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Glow"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -364,12 +368,12 @@ value = 0.85
 alignment = 2
 select_all_on_focus = true
 
-[node name="Deformation" type="HBoxContainer" parent="Fields/Curves/Fields"]
+[node name="Deformation" type="HBoxContainer" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Curves/Fields/Deformation"]
+[node name="Label" type="Label" parent="Fields/Content/Curves/Fields/Content/Deformation"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -377,13 +381,13 @@ text = "扰动响应"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Curves/Fields/Deformation"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Curves/Fields/Content/Deformation"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Curves/Fields/Deformation"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Curves/Fields/Content/Deformation"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -393,30 +397,30 @@ value = 0.5
 alignment = 2
 select_all_on_focus = true
 
-[node name="Help" type="Label" parent="Fields/Curves/Fields"]
+[node name="Help" type="Label" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "长短音符均可触发，关闭粒子也可单独显示。触发后松键仍会完整消散。粗细按 1080p 画面计算。"
 theme_type_variation = &"HelpLabel"
 
-[node name="Reset" type="Button" parent="Fields/Curves/Fields"]
+[node name="Reset" type="Button" parent="Fields/Content/Curves/Fields/Content"]
 layout_mode = 2
 text = "恢复参数"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复流线参数"
 
-[node name="Motion" parent="Fields" instance=ExtResource("2")]
+[node name="Motion" parent="Fields/Content" instance=ExtResource("2")]
 layout_mode = 2
 Title = "共享气流与运动"
 HasSwitch = false
 
-[node name="Lifetime" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Lifetime" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Lifetime"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Lifetime"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -424,13 +428,13 @@ text = "基准寿命（秒）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Lifetime"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Lifetime"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Lifetime"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Lifetime"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0.2
@@ -440,12 +444,12 @@ value = 1.6
 alignment = 2
 select_all_on_focus = true
 
-[node name="Speed" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Speed" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Speed"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Speed"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -453,13 +457,13 @@ text = "上升速度（像素/秒）"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Speed"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Speed"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Speed"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Speed"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 30
@@ -469,12 +473,12 @@ value = 180
 alignment = 2
 select_all_on_focus = true
 
-[node name="Turbulence" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Turbulence" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Turbulence"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Turbulence"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -482,13 +486,13 @@ text = "湍流强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Turbulence"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Turbulence"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Turbulence"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Turbulence"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -498,12 +502,12 @@ value = 0.45
 alignment = 2
 select_all_on_focus = true
 
-[node name="Spread" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Spread" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Spread"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Spread"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -511,13 +515,13 @@ text = "左右扩散"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Spread"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Spread"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Spread"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Spread"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -527,12 +531,12 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Flow" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Flow" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Flow"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Flow"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -540,13 +544,13 @@ text = "侧风强度"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Flow"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Flow"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Flow"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Flow"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -556,12 +560,12 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Density" type="HBoxContainer" parent="Fields/Motion/Fields"]
+[node name="Density" type="HBoxContainer" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 theme_override_constants/separation = 8
 script = ExtResource("ui_parameter")
 
-[node name="Label" type="Label" parent="Fields/Motion/Fields/Density"]
+[node name="Label" type="Label" parent="Fields/Content/Motion/Fields/Content/Density"]
 layout_mode = 2
 size_flags_horizontal = 0
 autowrap_mode = 3
@@ -569,13 +573,13 @@ text = "密度起伏"
 theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 
-[node name="Slider" type="HSlider" parent="Fields/Motion/Fields/Density"]
+[node name="Slider" type="HSlider" parent="Fields/Content/Motion/Fields/Content/Density"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Fields/Motion/Fields/Density"]
+[node name="Value" type="SpinBox" parent="Fields/Content/Motion/Fields/Content/Density"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 0
@@ -585,18 +589,18 @@ value = 0.85
 alignment = 2
 select_all_on_focus = true
 
-[node name="Beam" type="CheckButton" parent="Fields/Motion/Fields"]
+[node name="Beam" type="CheckButton" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 text = "收束羽流"
 custom_minimum_size = Vector2(0, 32)
 
-[node name="Help" type="Label" parent="Fields/Motion/Fields"]
+[node name="Help" type="Label" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "粒子与流线共用这组基准，流线略快上升、寿命略长。速度按 1080p 画面计算；两者关闭后参数仍保留。"
 theme_type_variation = &"HelpLabel"
 
-[node name="Reset" type="Button" parent="Fields/Motion/Fields"]
+[node name="Reset" type="Button" parent="Fields/Content/Motion/Fields/Content"]
 layout_mode = 2
 text = "恢复参数"
 theme_type_variation = &"QuietButton"

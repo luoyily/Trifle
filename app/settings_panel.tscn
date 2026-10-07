@@ -1,17 +1,21 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://app/SettingsPanel.cs" id="1"]
 [ext_resource type="PackedScene" path="res://app/audio_panel.tscn" id="2_audio"]
 [ext_resource type="PackedScene" path="res://app/background_panel.tscn" id="3_background"]
 [ext_resource type="PackedScene" path="res://app/note_appearance_panel.tscn" id="4_note"]
-[ext_resource type="PackedScene" path="res://app/light_effects_panel.tscn" id="5_lights"]
+[ext_resource type="PackedScene" path="res://app/keyboard_light_panel.tscn" id="5_lights"]
 [ext_resource type="PackedScene" path="res://app/particle_panel.tscn" id="6_particles"]
 [ext_resource type="PackedScene" path="res://app/preview_panel.tscn" id="7_preview"]
 
 [ext_resource type="Script" path="res://app/ParameterRow.cs" id="ui_parameter"]
 
+[ext_resource type="PackedScene" path="res://app/quick_settings_panel.tscn" id="8_quick"]
+[ext_resource type="PackedScene" path="res://app/contact_line_panel.tscn" id="9_line"]
+[ext_resource type="PackedScene" path="res://app/glow_panel.tscn" id="10_glow"]
+
 [node name="SettingsPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(380, 0)
 size_flags_horizontal = 0
 size_flags_vertical = 3
 script = ExtResource("1")
@@ -30,8 +34,19 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Margin/Content"]
 layout_mode = 2
-text = "设置"
+text = "快速设置"
 theme_type_variation = &"PanelTitle"
+
+[node name="QuickSettingsPanel" parent="Margin/Content" instance=ExtResource("8_quick")]
+layout_mode = 2
+
+[node name="Divider" type="HSeparator" parent="Margin/Content"]
+layout_mode = 2
+
+[node name="AdvancedTitle" type="Label" parent="Margin/Content"]
+layout_mode = 2
+text = "高级设置"
+theme_type_variation = &"MutedLabel"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Content"]
 layout_mode = 2
@@ -46,100 +61,7 @@ theme_override_constants/separation = 6
 [node name="AudioPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("2_audio")]
 layout_mode = 2
 
-[node name="DividerNotes" type="HSeparator" parent="Margin/Content/Scroll/Groups"]
-layout_mode = 2
-
-[node name="Notes" type="VBoxContainer" parent="Margin/Content/Scroll/Groups"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Header" type="Button" parent="Margin/Content/Scroll/Groups/Notes"]
-layout_mode = 2
-text = "音符"
-toggle_mode = true
-button_pressed = false
-alignment = 0
-tooltip_text = "点击展开 / 折叠此组设置"
-theme_type_variation = &"SectionHeader"
-custom_minimum_size = Vector2(0, 34)
-flat = false
-
-[node name="Fields" type="VBoxContainer" parent="Margin/Content/Scroll/Groups/Notes"]
-layout_mode = 2
-theme_override_constants/separation = 10
-visible = false
-
-[node name="LookAhead" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-script = ExtResource("ui_parameter")
-theme_override_constants/separation = 8
-
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/LookAhead"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "同屏音符时长（秒）"
-theme_type_variation = &"MutedLabel"
-custom_minimum_size = Vector2(108, 0)
-autowrap_mode = 3
-
-[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Notes/Fields/LookAhead"]
-layout_mode = 2
-custom_minimum_size = Vector2(54, 32)
-size_flags_horizontal = 3
-size_flags_vertical = 4
-scrollable = false
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Notes/Fields/LookAhead"]
-layout_mode = 2
-custom_minimum_size = Vector2(86, 32)
-min_value = 1.0
-max_value = 12.0
-step = 0.5
-value = 6.0
-alignment = 2
-select_all_on_focus = true
-
-[node name="LookAheadHelp" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-autowrap_mode = 3
-text = "画面内显示的音符时间范围。数值越大，画面覆盖的时间越长，音符下落越慢。"
-theme_type_variation = &"HelpLabel"
-
-[node name="ColorModeLabel" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-text = "配色依据"
-
-[node name="ColorMode" type="OptionButton" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-
-[node name="ColorTargetLabel" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-text = "要调整的通道 / 轨道"
-
-[node name="ColorTarget" type="OptionButton" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-clip_text = true
-
-[node name="Color" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Color"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "分组颜色"
-
-[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Notes/Fields/Color"]
-layout_mode = 2
-custom_minimum_size = Vector2(100, 32)
-edit_alpha = false
-tooltip_text = "同时调整此组音符与按下琴键的颜色"
-
-[node name="ColorHelp" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
-layout_mode = 2
-autowrap_mode = 3
-text = "同一通道包含多个轨道时，可按轨道分别配色。两种模式各自保留颜色。"
-theme_type_variation = &"HelpLabel"
-
-[node name="NoteAppearancePanel" parent="Margin/Content/Scroll/Groups/Notes/Fields" instance=ExtResource("4_note")]
+[node name="BackgroundPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("3_background")]
 layout_mode = 2
 
 [node name="Keyboard" type="VBoxContainer" parent="Margin/Content/Scroll/Groups"]
@@ -157,20 +79,24 @@ theme_type_variation = &"SectionHeader"
 custom_minimum_size = Vector2(0, 34)
 flat = false
 
-[node name="Fields" type="VBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard"]
+[node name="Fields" type="MarginContainer" parent="Margin/Content/Scroll/Groups/Keyboard"]
 visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="FirstPitch" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="FirstPitch" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/FirstPitch"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/FirstPitch"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "最低音（MIDI 编号）"
 
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/FirstPitch"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/FirstPitch"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 max_value = 127.0
@@ -178,15 +104,15 @@ value = 21.0
 alignment = 2
 select_all_on_focus = true
 
-[node name="LastPitch" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="LastPitch" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/LastPitch"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/LastPitch"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "最高音（MIDI 编号）"
 
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/LastPitch"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/LastPitch"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 max_value = 127.0
@@ -194,32 +120,32 @@ value = 108.0
 alignment = 2
 select_all_on_focus = true
 
-[node name="Summary" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Summary" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 text = "A0 – C8 · 88 键"
 
-[node name="Reset" type="Button" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Reset" type="Button" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 text = "恢复标准 88 键"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 
-[node name="Help" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Help" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "范围外的音符不显示；MIDI 文件与时间轴保持原样。"
 theme_type_variation = &"HelpLabel"
 
-[node name="LayoutLabel" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="LayoutLabel" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 text = "位置与尺寸（画面百分比）"
 
-[node name="X" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="X" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 script = ExtResource("ui_parameter")
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/X"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/X"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "左侧位置（%）"
@@ -227,13 +153,13 @@ theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 autowrap_mode = 3
 
-[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/X"]
+[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/X"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/X"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/X"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 max_value = 100.0
@@ -241,12 +167,12 @@ step = 0.1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Y" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Y" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 script = ExtResource("ui_parameter")
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Y"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Y"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "顶部位置（%）"
@@ -254,13 +180,13 @@ theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 autowrap_mode = 3
 
-[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Y"]
+[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Y"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Y"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Y"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 1.0
@@ -270,12 +196,12 @@ value = 83.3
 alignment = 2
 select_all_on_focus = true
 
-[node name="Width" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Width" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 script = ExtResource("ui_parameter")
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Width"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Width"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "宽度（%）"
@@ -283,13 +209,13 @@ theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 autowrap_mode = 3
 
-[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Width"]
+[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Width"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Width"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Width"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 5.0
@@ -299,12 +225,12 @@ value = 93.3
 alignment = 2
 select_all_on_focus = true
 
-[node name="Height" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Height" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 script = ExtResource("ui_parameter")
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Height"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Height"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "高度（%）"
@@ -312,13 +238,13 @@ theme_type_variation = &"MutedLabel"
 custom_minimum_size = Vector2(108, 0)
 autowrap_mode = 3
 
-[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Height"]
+[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Height"]
 layout_mode = 2
 custom_minimum_size = Vector2(54, 32)
 size_flags_horizontal = 3
 size_flags_vertical = 4
 scrollable = false
-[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Height"]
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Height"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 min_value = 2.0
@@ -328,59 +254,160 @@ value = 16.6
 alignment = 2
 select_all_on_focus = true
 
-[node name="ResetLayout" type="Button" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="ResetLayout" type="Button" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 text = "恢复默认布局"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 
-[node name="White" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="White" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/White"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/White"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "白键颜色"
 
-[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/White"]
+[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/White"]
 layout_mode = 2
 custom_minimum_size = Vector2(100, 32)
 edit_alpha = false
 
-[node name="Black" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="Black" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Black"]
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Black"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "黑键颜色"
 
-[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Black"]
+[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/Black"]
 layout_mode = 2
 custom_minimum_size = Vector2(100, 32)
 edit_alpha = false
 
-[node name="ColorsHelp" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields"]
+[node name="ColorsHelp" type="Label" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "按下时使用音符的分组颜色。调整布局同时移动音符列与命中位置。"
 theme_type_variation = &"HelpLabel"
 
-[node name="DividerLightEffectsPanel" type="HSeparator" parent="Margin/Content/Scroll/Groups"]
+
+[node name="EffectsInset" type="MarginContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+
+[node name="Groups" type="VBoxContainer" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/EffectsInset"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="KeyboardLightPanel" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/EffectsInset/Groups" instance=ExtResource("5_lights")]
 layout_mode = 2
 
-[node name="LightEffectsPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("5_lights")]
+[node name="ContactLinePanel" parent="Margin/Content/Scroll/Groups/Keyboard/Fields/Content/EffectsInset/Groups" instance=ExtResource("9_line")]
+layout_mode = 2
+[node name="Notes" type="VBoxContainer" parent="Margin/Content/Scroll/Groups"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="Button" parent="Margin/Content/Scroll/Groups/Notes"]
+layout_mode = 2
+text = "MIDI 音符"
+toggle_mode = true
+button_pressed = false
+alignment = 0
+tooltip_text = "点击展开 / 折叠此组设置"
+theme_type_variation = &"SectionHeader"
+custom_minimum_size = Vector2(0, 34)
+flat = false
+
+[node name="Fields" type="MarginContainer" parent="Margin/Content/Scroll/Groups/Notes"]
+layout_mode = 2
+visible = false
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Margin/Content/Scroll/Groups/Notes/Fields"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LookAhead" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+script = ExtResource("ui_parameter")
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/LookAhead"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "下落提前量（秒）"
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(108, 0)
+autowrap_mode = 3
+
+[node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/LookAhead"]
+layout_mode = 2
+custom_minimum_size = Vector2(54, 32)
+size_flags_horizontal = 3
+size_flags_vertical = 4
+scrollable = false
+[node name="Value" type="SpinBox" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/LookAhead"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = 1.0
+max_value = 12.0
+step = 0.5
+value = 6.0
+alignment = 2
+select_all_on_focus = true
+
+[node name="LookAheadHelp" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "画面内显示的音符时间范围。数值越大，画面覆盖的时间越长，音符下落越慢。"
+theme_type_variation = &"HelpLabel"
+
+[node name="ColorModeLabel" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+text = "配色依据"
+
+[node name="ColorMode" type="OptionButton" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
 layout_mode = 2
 
+[node name="ColorTargetLabel" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+text = "要调整的通道 / 轨道"
+
+[node name="ColorTarget" type="OptionButton" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+clip_text = true
+
+[node name="Color" type="HBoxContainer" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/Color"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "分组颜色"
+
+[node name="Value" type="ColorPickerButton" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/Color"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 32)
+edit_alpha = false
+tooltip_text = "同时调整此组音符与按下琴键的颜色"
+
+[node name="ColorHelp" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "同一通道包含多个轨道时，可按轨道分别配色。两种模式各自保留颜色。"
+theme_type_variation = &"HelpLabel"
+
+[node name="NoteAppearancePanel" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content" instance=ExtResource("4_note")]
+layout_mode = 2
+
+
+[node name="GlowPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("10_glow")]
+layout_mode = 2
 [node name="ParticlePanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("6_particles")]
-layout_mode = 2
-
-[node name="DividerBackgroundPanel" type="HSeparator" parent="Margin/Content/Scroll/Groups"]
-layout_mode = 2
-
-[node name="BackgroundPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("3_background")]
 layout_mode = 2
 
 [node name="PreviewPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("7_preview")]
 layout_mode = 2
-

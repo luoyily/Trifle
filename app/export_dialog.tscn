@@ -27,7 +27,7 @@ theme_override_constants/margin_bottom = 20
 
 [node name="Content" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="Output" type="HBoxContainer" parent="Margin/Content"]
 layout_mode = 2

@@ -8,6 +8,7 @@ public partial class EffectSection : VBoxContainer
 {
     [Export] public string Title { get; set; } = "效果";
     [Export] public bool HasSwitch { get; set; } = true;
+    [Export] public StringName HeadingStyle { get; set; } = "SubsectionHeader";
     public event Action<bool> EnabledChanged;
     private Button _expand;
     private CheckButton _enabled;
@@ -16,6 +17,7 @@ public partial class EffectSection : VBoxContainer
     public override void _Ready()
     {
         _expand = GetNode<Button>("Header/Expand");
+        _expand.ThemeTypeVariation = HeadingStyle;
         _enabled = GetNode<CheckButton>("Header/Enabled");
         _fields = GetNode<Control>("Fields");
         _enabled.Visible = HasSwitch;

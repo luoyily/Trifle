@@ -94,11 +94,6 @@ layout_mode = 2
 theme_type_variation = &"MenuText"
 size_flags_vertical = 4
 
-[node name="Import" type="Button" parent="Margin/Content/Header"]
-layout_mode = 2
-text = "打开 MIDI"
-theme_type_variation = &"MenuText"
-size_flags_vertical = 4
 
 [node name="Info" type="Button" parent="Margin/Content/Header"]
 layout_mode = 2
@@ -139,13 +134,51 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="Preview" type="TextureRect" parent="Margin/Content/Body"]
-custom_minimum_size = Vector2(0, 240)
+[node name="PreviewArea" type="Control" parent="Margin/Content/Body"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(320, 180)
+
+[node name="Preview" type="TextureRect" parent="Margin/Content/Body/PreviewArea"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 1
 size_flags_horizontal = 3
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
+
+
+[node name="EmptyState" type="CenterContainer" parent="Margin/Content/Body/PreviewArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="Margin/Content/Body/PreviewArea/EmptyState"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Margin/Content/Body/PreviewArea/EmptyState/Content"]
+layout_mode = 2
+text = "从一首 MIDI 开始"
+horizontal_alignment = 1
+theme_type_variation = &"PanelTitle"
+
+[node name="OpenMidi" type="Button" parent="Margin/Content/Body/PreviewArea/EmptyState/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "打开 MIDI 文件"
+
+[node name="Hint" type="Label" parent="Margin/Content/Body/PreviewArea/EmptyState/Content"]
+layout_mode = 2
+text = "也可以将文件拖入窗口"
+horizontal_alignment = 1
+theme_type_variation = &"MutedLabel"
 
 [node name="SettingsPanel" parent="Margin/Content/Body" instance=ExtResource("5_settings")]
 layout_mode = 2

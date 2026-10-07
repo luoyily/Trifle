@@ -54,7 +54,10 @@ public partial class Main : Control
     private AudioPanel _audioPanel;
     private BackgroundPanel _backgroundPanel;
     private NoteAppearancePanel _notePanel;
-    private LightEffectsPanel _lightPanel;
+    private QuickSettingsPanel _quick;
+    private KeyboardLightPanel _keyboardLightPanel;
+    private ContactLinePanel _contactLinePanel;
+    private GlowPanel _glowPanel;
     private ParticlePanel _particlePanel;
     private PreviewPanel _previewPanel;
     private PreviewSettings _previewSettings = new();
@@ -75,7 +78,7 @@ public partial class Main : Control
         _present = _viewport.GetNode<TextureRect>("Present");
         _present.Texture = _hdrViewport.GetTexture();
         _visualizer.SetOutputMaterial((ShaderMaterial)_present.Material);
-        GetNode<TextureRect>("Margin/Content/Body/Preview").Texture =
+        GetNode<TextureRect>("Margin/Content/Body/PreviewArea/Preview").Texture =
             GetNode<SubViewport>("PreviewViewport").GetTexture();
         const string ui = "Margin/Content/";
         _timeline = GetNode<HSlider>(ui + "Transport/Time");
@@ -94,8 +97,14 @@ public partial class Main : Control
         _settings = GetNode<SettingsPanel>(ui + "Body/SettingsPanel");
         _audio = GetNode<AudioPlayback>("AudioPlayback");
         _audioPanel = _settings.GetNode<AudioPanel>("Margin/Content/Scroll/Groups/AudioPanel");
-        _audioPanel.LoadRequested += path => LoadAudioFile(path);
-        _audioPanel.ClearRequested += ClearAudio;
+        _quick = _settings.GetNode<QuickSettingsPanel>("Margin/Content/QuickSettingsPanel");
+        _quick.AudioRequested += path => LoadAudioFile(path);
+        _quick.AudioClearRequested += ClearAudio;
+        _quick.ImageRequested += path => LoadBackgroundImage(path);
+        _quick.ImageClearRequested += ClearBackgroundImage;
+        _quick.BackgroundTypeChanged += SetBackgroundType;
+        _quick.ColorChanged += SetBackgroundColor;
+        _quick.EndColorChanged += color => SetBackgroundGradient((int)_visualizer.Background.Gradient, color);
         _audioPanel.EnabledChanged += SetAudioEnabled;
         _audioPanel.OffsetChanged += SetAudioOffset;
         _settings.Bind(_visualizer);
@@ -111,15 +120,17 @@ public partial class Main : Control
         _backgroundPanel = _settings.GetNode<BackgroundPanel>("Margin/Content/Scroll/Groups/BackgroundPanel");
         _backgroundPanel.ColorChanged += SetBackgroundColor;
         _backgroundPanel.FitChanged += SetBackgroundFit;
-        _backgroundPanel.ImageRequested += path => LoadBackgroundImage(path);
-        _backgroundPanel.ClearRequested += ClearBackgroundImage;
+        _backgroundPanel.AppearanceChanged += SetBackgroundAppearance;
         RefreshBackgroundSettings();
-        _notePanel = _settings.GetNode<NoteAppearancePanel>("Margin/Content/Scroll/Groups/Notes/Fields/NoteAppearancePanel");
+        _notePanel = _settings.GetNode<NoteAppearancePanel>("Margin/Content/Scroll/Groups/Notes/Fields/Content/NoteAppearancePanel");
         _notePanel.AppearanceChanged += ApplyNoteAppearance;
         RefreshNoteSettings();
-        _lightPanel = _settings.GetNode<LightEffectsPanel>("Margin/Content/Scroll/Groups/LightEffectsPanel");
-        _lightPanel.SettingsChanged += ApplyLightEffects;
-        _lightPanel.GlowChanged += ApplyGlow;
+        _keyboardLightPanel = _settings.GetNode<KeyboardLightPanel>("Margin/Content/Scroll/Groups/Keyboard/Fields/Content/EffectsInset/Groups/KeyboardLightPanel");
+        _contactLinePanel = _settings.GetNode<ContactLinePanel>("Margin/Content/Scroll/Groups/Keyboard/Fields/Content/EffectsInset/Groups/ContactLinePanel");
+        _glowPanel = _settings.GetNode<GlowPanel>("Margin/Content/Scroll/Groups/GlowPanel");
+        _keyboardLightPanel.SettingsChanged += ApplyKeyboardLights;
+        _contactLinePanel.SettingsChanged += ApplyContactLine;
+        _glowPanel.SettingsChanged += ApplyGlow;
         RefreshLightSettings();
         _particlePanel = _settings.GetNode<ParticlePanel>("Margin/Content/Scroll/Groups/ParticlePanel");
         _particlePanel.SettingsChanged += ApplyParticles;
@@ -133,15 +144,18 @@ public partial class Main : Control
         // This event is the future effects hook. Seeking only rebuilds state and clears diagnostics.
         _playback.NoteHit += note => { _hitsSinceSeek++; _lastHit = note; };
         _fileDialog = GetNode<FileDialog>("MidiDialog");
-        _fileDialog.CurrentDir = ProjectSettings.GlobalizePath("res://assets/test_materials");
+        _fileDialog.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
         _fileDialog.FileSelected += LoadMidiFile;
-        GetNode<Button>(ui + "Header/Import").Pressed += () => _fileDialog.PopupCenteredRatio(0.75f);
+        _quick.MidiRequested += OpenMidiDialog;
+        _quick.MidiClearRequested += ClearMidiFile;
+        GetNode<Button>(ui + "Body/PreviewArea/EmptyState/Content/OpenMidi").Pressed += OpenMidiDialog;
+        GetWindow().FilesDropped += HandleFilesDropped;
         _infoDialog = GetNode<SongInfoDialog>("SongInfoDialog");
         _exportDialog = GetNode<ExportDialog>("ExportDialog");
         GetNode<Button>(ui + "Header/Info").Pressed += () => _infoDialog.PopupCentered();
         GetNode<Button>(ui + "Header/Export").Pressed += () =>
         {
-            if (_playback.DurationSeconds > 0) _exportDialog.Open();
+            if (_playback.DurationSeconds > 0) { RefreshExportContents(); _exportDialog.Open(); }
             else SetStatus("当前曲目没有可导出的时间区间。");
         };
         GetNode<Button>(ui + "Header/HideUi").Pressed += () => SetUiVisible(!_uiVisible);
@@ -186,6 +200,7 @@ public partial class Main : Control
             _projectPath = "";
             _projectMenu.SetProjectPath("");
             SetSong(song);
+            _settings.RestoreExpandedSections(new());
             SetStatus("已打开 MIDI；可在设置栏选择音频。Space 播放 / 暂停，Ctrl+H 显示 / 隐藏界面。");
             GD.Print($"[M4] Imported {path}: {song.Tracks.Length} tracks, {song.Notes.Length} notes, {song.DurationSeconds:F6}s.");
         }
@@ -207,6 +222,8 @@ public partial class Main : Control
     private void SetSong(MidiSong song)
     {
         _song = song;
+        _quick.RefreshMidi(song.SourcePath, song.SourcePath.Length > 0);
+        GetNode<Control>("Margin/Content/Body/PreviewArea/EmptyState").Visible = _uiVisible && song.SourcePath.Length == 0;
         // A newly imported MIDI must not accidentally play the previous song's audio.
         _audio.Configure(new AudioSettings(), null);
         _playback.SetSong(song);
@@ -254,8 +271,9 @@ public partial class Main : Control
         Visual = _visualizer.GetSettings(), Export = _exportDialog.GetPreferences(),
         Audio = _audio.Settings,
         TimeSeconds = _playback.TimeSeconds,
-        SettingsVisible = _settingsVisible
-        , Preview = _previewSettings
+        SettingsVisible = _settingsVisible,
+        ExpandedSections = _settings.CaptureExpandedSections(),
+        Preview = _previewSettings
     };
 
     public bool SaveProjectFile(string path)
@@ -398,6 +416,7 @@ public partial class Main : Control
         SetTime(data.TimeSeconds);
         SetSettingsVisible(data.SettingsVisible);
         ApplyPreviewSettings(data.Preview);
+        _settings.RestoreExpandedSections(data.ExpandedSections);
         SetUiVisible(true);
         _projectPath = Path.GetFullPath(projectPath);
         _projectMenu.ClearMissingRequest();
@@ -490,6 +509,7 @@ public partial class Main : Control
             _audio.Configure(new AudioSettings { Path = ProjectSettings.GlobalizePath(path) }, stream);
             RefreshAudioSettings();
             SynchronizeAudio(force: true);
+            _settings.CollapseSection("AudioPanel");
             SetStatus("已打开音频：" + Path.GetFileName(path));
             return true;
         }
@@ -523,6 +543,7 @@ public partial class Main : Control
     private void RefreshAudioSettings()
     {
         _audioPanel.Refresh(_audio.Settings, _audio.Duration);
+        _quick.RefreshAudio(_audio.Settings, _audio.Duration, _audio.Stream != null);
         _exportDialog?.SetAudio(_audio.Settings);
         if (_song == null) return;
         double duration = AudioTiming.PlaybackDuration(_song.DurationSeconds,
@@ -576,24 +597,36 @@ public partial class Main : Control
 
     public void SetGlow(bool enabled, double intensity) => ApplyGlow(new GlowSettings { Enabled = enabled, Intensity = intensity });
 
-    private void ApplyLightEffects(LightEffectsSettings settings)
+    private void ApplyKeyboardLights(KeyboardLightSettings settings)
     {
         if (_busy) return;
-        _visualizer.SetLightEffects(settings);
+        _visualizer.SetKeyboardLights(settings);
         RefreshLightSettings();
     }
 
     public void SetLightEffects(double keyboard, double hit, double decay, double near, double distance) =>
-        ApplyLightEffects(_visualizer.Lights with { KeyboardEmission = keyboard, HitEmission = hit,
+        ApplyKeyboardLights(_visualizer.KeyboardLights with { KeyboardEmission = keyboard, HitEmission = hit,
             HitDecay = decay, NearStrength = near, NearDistance = distance });
 
     public void SetContactLine(double emission, double width, double wave) =>
-        ApplyLightEffects(_visualizer.Lights with { LineEmission = emission, LineWidth = width, LineWave = wave });
+        ApplyContactLine(_visualizer.ContactLine with { LineEmission = emission, LineWidth = width, LineWave = wave });
 
     public void SetKeyboardAreaLight(double strength, double radius) =>
-        ApplyLightEffects(_visualizer.Lights with { KeyLightStrength = strength, KeyLightRadius = radius });
+        ApplyKeyboardLights(_visualizer.KeyboardLights with { KeyLightStrength = strength, KeyLightRadius = radius });
 
-    private void RefreshLightSettings() => _lightPanel.Refresh(_visualizer.Lights, _visualizer.Glow);
+    private void ApplyContactLine(ContactLineSettings settings)
+    {
+        if (_busy) return;
+        _visualizer.SetContactLine(settings);
+        RefreshLightSettings();
+    }
+
+    private void RefreshLightSettings()
+    {
+        _keyboardLightPanel.Refresh(_visualizer.KeyboardLights);
+        _contactLinePanel.Refresh(_visualizer.ContactLine);
+        _glowPanel.Refresh(_visualizer.Glow);
+    }
 
     private void ApplyParticles(ParticleSettings settings)
     {
@@ -609,15 +642,19 @@ public partial class Main : Control
     public void SetBackgroundGradient(int mode, Color endColor)
     {
         if (_busy) return;
-        _visualizer.SetBackground(_visualizer.Background with { Gradient = (BackgroundGradient)mode, EndColor = endColor.ToHtml() }, allowFallback: true);
+        _visualizer.SetBackground(_visualizer.Background with
+        {
+            Type = mode == (int)BackgroundGradient.Solid ? BackgroundType.Solid : BackgroundType.Gradient,
+            Gradient = (BackgroundGradient)mode, EndColor = endColor.ToHtml()
+        }, allowFallback: true);
         RefreshBackgroundSettings();
     }
 
     public Godot.Collections.Dictionary GetLightEffectsInfo() => new()
     {
-        ["keyboard_emission"] = _visualizer.Lights.KeyboardEmission, ["hit_emission"] = _visualizer.Lights.HitEmission,
-        ["hit_decay"] = _visualizer.Lights.HitDecay, ["near_strength"] = _visualizer.Lights.NearStrength,
-        ["near_distance"] = _visualizer.Lights.NearDistance
+        ["keyboard_emission"] = _visualizer.KeyboardLights.KeyboardEmission, ["hit_emission"] = _visualizer.KeyboardLights.HitEmission,
+        ["hit_decay"] = _visualizer.KeyboardLights.HitDecay, ["near_strength"] = _visualizer.KeyboardLights.NearStrength,
+        ["near_distance"] = _visualizer.KeyboardLights.NearDistance
     };
 
     private void RefreshNoteSettings() => _notePanel.Refresh(_visualizer.NoteAppearance);
@@ -661,8 +698,9 @@ public partial class Main : Control
         if (_busy) return false;
         try
         {
-            _visualizer.SetBackground(_visualizer.Background with { ImagePath = ProjectSettings.GlobalizePath(path) }, reloadImage: true);
+            _visualizer.SetBackground(_visualizer.Background with { Type = BackgroundType.Image, ImagePath = ProjectSettings.GlobalizePath(path) }, reloadImage: true);
             RefreshBackgroundSettings();
+            _settings.CollapseSection("BackgroundPanel");
             SetStatus("已打开背景图片：" + Path.GetFileName(path));
             return true;
         }
@@ -691,8 +729,12 @@ public partial class Main : Control
         RefreshBackgroundSettings();
     }
 
-    private void RefreshBackgroundSettings() => _backgroundPanel.Refresh(_visualizer.Background, _visualizer.HasBackgroundImage);
-    private string BackgroundNotice() => _visualizer.BackgroundWarning.Length == 0 ? "" : "\n" + _visualizer.BackgroundWarning;
+    private void RefreshBackgroundSettings()
+    {
+        _backgroundPanel.Refresh(_visualizer.Background, _visualizer.HasBackgroundImage);
+        _quick.RefreshBackground(_visualizer.Background, _visualizer.HasBackgroundImage);
+    }
+    private string BackgroundNotice() => _visualizer.BackgroundWarning.Length == 0 ? "" : " · 背景图片不可用，已使用背景色。";
 
     public Godot.Collections.Dictionary GetAppearanceInfo() => new()
     {
@@ -749,6 +791,7 @@ public partial class Main : Control
     public void SetUiVisible(bool visible)
     {
         _uiVisible = visible;
+        GetNode<Control>("Margin/Content/Body/PreviewArea/EmptyState").Visible = visible && (_song?.SourcePath.Length ?? 0) == 0;
         GetWindow().MinSize = visible ? EditorWindowMinimum : PreviewWindowMinimum;
         var content = GetNode<VBoxContainer>("Margin/Content");
         foreach (string name in new[] { "Header", "HeaderDivider", "TransportDivider", "Transport", "Status" })
@@ -772,7 +815,7 @@ public partial class Main : Control
     {
         if (input is not InputEventKey key || !key.Pressed || key.Echo) return;
         if (_infoDialog.Visible || _exportDialog.Visible || _fileDialog.Visible || _projectMenu.HasOpenDialog() ||
-            _audioPanel.HasOpenDialog() || _backgroundPanel.HasOpenPopup() || _notePanel.HasOpenPopup() || _lightPanel.HasOpenPopup() ||
+            _quick.HasOpenPopup() || _backgroundPanel.HasOpenPopup() || _notePanel.HasOpenPopup() || _contactLinePanel.HasOpenPopup() ||
             _previewPanel.HasOpenPopup() || (_recoveryDialog?.Visible ?? false) ||
             _settings.HasOpenPopup()) return;
         Control focus = GetViewport().GuiGetFocusOwner();
@@ -905,10 +948,14 @@ public partial class Main : Control
         _audioPanel.SetBusy(busy);
         _backgroundPanel.SetBusy(busy);
         _notePanel.SetBusy(busy);
-        _lightPanel.SetBusy(busy);
+        _quick.SetBusy(busy);
+        _keyboardLightPanel.SetBusy(busy);
+        _contactLinePanel.SetBusy(busy);
+        _glowPanel.SetBusy(busy);
+        GetNode<Button>("Margin/Content/Body/PreviewArea/EmptyState/Content/OpenMidi").Disabled = busy;
         _particlePanel.SetBusy(busy);
         _previewPanel.SetBusy(busy);
-        foreach (string path in new[] { "Header/Import", "Header/Export", "Transport/Play", "Transport/Stop",
+        foreach (string path in new[] { "Header/Export", "Transport/Play", "Transport/Stop",
             "Transport/Start", "Transport/FirstNote" })
             GetNode<Button>("Margin/Content/" + path).Disabled = busy;
     }
@@ -921,7 +968,11 @@ public partial class Main : Control
         ["error"] = _exportError, ["elapsed_seconds"] = _exportWatch.Elapsed.TotalSeconds
     };
 
-    public override void _ExitTree() => _exportCancellation?.Cancel();
+    public override void _ExitTree()
+    {
+        _exportCancellation?.Cancel();
+        GetWindow().FilesDropped -= HandleFilesDropped;
+    }
 
     public Godot.Collections.Dictionary GetSongInfo() => _song == null ? new() : new()
     {

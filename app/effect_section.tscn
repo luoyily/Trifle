@@ -17,14 +17,18 @@ text = "▸ 效果"
 toggle_mode = true
 alignment = 0
 flat = false
-theme_type_variation = &"EffectHeader"
+theme_type_variation = &"SubsectionHeader"
 
 [node name="Enabled" type="CheckButton" parent="Header"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 
-[node name="Fields" type="VBoxContainer" parent="."]
+[node name="Fields" type="MarginContainer" parent="."]
 visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Fields"]
 layout_mode = 2
 theme_override_constants/separation = 8
 

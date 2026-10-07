@@ -279,7 +279,7 @@ Check(AudioTiming.Clip(0, 4 / 30.0, 0.1, 10).Duration > 0,
     "Audio covers rounded-up final video frame");
 Rejected(() => new AudioSettings { OffsetSeconds = double.NaN }.Validate(), "Nonfinite audio offset rejected");
 Rejected(() => new AudioSettings { OffsetSeconds = 3601 }.Validate(), "Out-of-range audio offset rejected");
-Rejected(() => new AudioSettings { Path = "song.mp3" }.Validate(), "Unsupported audio format rejected");
+Rejected(() => new AudioSettings { Path = "song.flac" }.Validate(), "Unsupported audio format rejected");
 Rejected(() => AudioTiming.Clip(0, 0, 0, 10), "Empty audio export interval rejected");
 new KeyboardAppearance().Validate();
 new BackgroundSettings().Validate();
@@ -324,7 +324,7 @@ try
             Note = new NoteAppearance { Shape = NoteShape.RoundedRectangle, CornerRadius = 8,
                 Opacity = 0.6, Brightness = 0.8, Emission = 2 },
             Glow = new GlowSettings { Enabled = true, Intensity = 0.7 },
-            Lights = new LightEffectsSettings { KeyboardEmission = 2, HitEmission = 3, NearStrength = 1 },
+            KeyboardLights = new KeyboardLightSettings { KeyboardEmission = 2, HitEmission = 3, NearStrength = 1 },
             Particles = new ParticleSettings { Enabled = true, Amount = 32, Turbulence = 1, Beam = true, Curves = true }
         },
         Export = new ExportPreferences { OutputPath = Path.Combine(storageRoot, "片段.mp4"), StartSeconds = 0.1, EndSeconds = 0.4 }
@@ -346,7 +346,7 @@ try
         "Project preserves keyboard appearance, background color, fit and relative image reference");
     Check(loadedProject.Visual.Note == savedProject.Visual.Note && loadedProject.Visual.Glow == savedProject.Visual.Glow,
         "Project preserves note shape, opacity, brightness, emission and global glow");
-    Check(loadedProject.Visual.Lights == savedProject.Visual.Lights && loadedProject.Visual.Particles == savedProject.Visual.Particles,
+    Check(loadedProject.Visual.KeyboardLights == savedProject.Visual.KeyboardLights && loadedProject.Visual.Particles == savedProject.Visual.Particles,
         "Project preserves lighting, GPU particles, turbulence, beams and curves");
     string recoveryFile = Path.Combine(storageRoot, "recovery.json");
     ProjectStorage.SaveRecovery(recoveryFile, new RecoveryData { ProjectPath = projectFile, Project = savedProject });
@@ -393,7 +393,7 @@ try
         "Older projects receive default keyboard layout, colors and no image");
     Check(minimal.Visual.Note == new NoteAppearance() && minimal.Visual.Glow == new GlowSettings(),
         "Older projects default to opaque rectangular notes, unit brightness, no emission and no glow");
-    Check(minimal.Visual.Lights == new LightEffectsSettings() && minimal.Visual.Particles == new ParticleSettings() &&
+    Check(minimal.Visual.KeyboardLights == new KeyboardLightSettings() && minimal.Visual.Particles == new ParticleSettings() &&
         minimal.Preview == new Trifle.App.PreviewSettings() && minimal.Export.Height == 1080 && minimal.Export.FramesPerSecond == 30,
         "Older projects receive lighting, particle, preview and export defaults");
     File.WriteAllText(presetFile, "{\"kind\":\"trifle-preset\",\"version\":1}");
@@ -451,7 +451,7 @@ Check(index.FirstStillRelevant(60) == 0 && index.FirstStillRelevant(100) == 4, "
 Check(index.FirstStartingAfter(-1) == 0 && index.FirstStartingAtOrAfter(999) == 4, "Index handles before and after song bounds");
 Check(new MidiNoteIndex(Array.Empty<MidiNote>()).FirstStillRelevant(0) == 0, "Empty note index is safe");
 Rejected(() => new MidiNoteIndex(indexedNotes.Reverse().ToArray()), "Unsorted note index rejected");
-Rejected(() => new LightEffectsSettings { NearDistance = double.NaN }.Validate(), "Nonfinite light settings rejected");
+Rejected(() => new KeyboardLightSettings { NearDistance = double.NaN }.Validate(), "Nonfinite light settings rejected");
 Rejected(() => new ParticleSettings { Amount = 10000 }.Validate(), "Unbounded particle count rejected");
 Rejected(() => new ParticleSettings { Turbulence = double.PositiveInfinity }.Validate(), "Nonfinite turbulence rejected");
 Rejected(() => new VisualSettings { Particles = null }.Validate(), "Null particle block rejected");

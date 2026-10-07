@@ -27,6 +27,9 @@ public partial class ExportDialog : Window
     private bool _syncingRange;
     private ExportSettings _pending;
     private AudioSettings _audio = new();
+    private string _contents = "MIDI 音符 · 键盘 · 纯色背景";
+    private string _assetWarning = "";
+    private string _assetDetails = "";
     private OptionButton _size, _fps;
     private OptionButton _encoder, _preset, _audioQuality;
     private SpinBox _crf;
@@ -148,7 +151,9 @@ public partial class ExportDialog : Window
     {
         string sound = _audio.Enabled && _audio.Path.Length > 0
             ? $"音频：{Path.GetFileName(_audio.Path)}，偏移 {_audio.OffsetSeconds:+0.###;-0.###;0} 秒（AAC）" : "无音频";
-        _message.Text = "MP4\n" + sound;
+        _message.Text = "包含内容：" + _contents + "\n" + sound +
+            (_assetWarning.Length > 0 ? "\n注意：" + _assetWarning : "");
+        _message.TooltipText = _audio.Path + (_assetDetails.Length > 0 ? "\n" + _assetDetails : "");
         _progress.Value = 0;
         PopupCentered();
     }
@@ -157,6 +162,13 @@ public partial class ExportDialog : Window
     {
         _audio = settings;
         if (_audioQuality != null) _audioQuality.Disabled = _busy || !_audio.Enabled || _audio.Path.Length == 0;
+    }
+
+    public void SetContents(string contents, string warning, string details = "")
+    {
+        _contents = contents;
+        _assetWarning = warning;
+        _assetDetails = details;
     }
 
     public override void _Input(InputEvent input)
