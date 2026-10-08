@@ -2,11 +2,12 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Trifle.Score;
 
-// Rasterize on row, appearance or resolution changes. Ordinary playback only moves the cursor.
+// Cache three rows and prepare upcoming playback rows on a CPU worker.
 public partial class ScoreStrip : Node2D
 {
     public MuseScoreBundle Bundle { get; private set; }
@@ -14,6 +15,9 @@ public partial class ScoreStrip : Node2D
     public int RasterCount { get; private set; }
     public int CachedRows => _cache.Count;
     public double LastRasterMilliseconds { get; private set; }
+    public int PreloadCount { get; private set; }
+    public double LastPreloadMilliseconds { get; private set; }
+    public bool Preloading => _preloadTask != null;
     public ScoreSettings Settings { get; private set; } = new();
     public double WidthFraction => Settings.Width;
     public double YFraction => Settings.Y;
@@ -22,6 +26,12 @@ public partial class ScoreStrip : Node2D
     public Vector2I TextureSize => _texture == null ? Vector2I.Zero : new(_texture.GetWidth(), _texture.GetHeight());
     private readonly Dictionary<int, ImageTexture> _cache = new();
     private readonly Queue<int> _order = new();
+    private readonly HashSet<int> _failedPreloads = new();
+    private CancellationTokenSource _preloadCancellation = new();
+    private Task<ScoreRasterizer.Prepared> _preloadTask;
+    private int _generation, _pendingGeneration, _pendingRow;
+    private int _textureRow = -1;
+    private bool _exiting;
     private ImageTexture _texture;
     private Sprite2D _notation;
     private Line2D _cursorLine;
@@ -36,13 +46,19 @@ public partial class ScoreStrip : Node2D
     public override void _Ready()
     {
         var shader = GD.Load<Shader>("res://score/brightness.gdshader");
-        _notationMaterial = new ShaderMaterial { Shader = shader };
+        _notationMaterial = new ShaderMaterial { Shader = GD.Load<Shader>("res://score/notation.gdshader") };
         _cursorMaterial = new ShaderMaterial { Shader = shader };
         _notation = new Sprite2D { Name = "Notation", Centered = false, RegionEnabled = true,
             RegionFilterClipEnabled = true, Material = _notationMaterial };
         _cursorLine = new Line2D { Name = "Cursor", Width = 3, Antialiased = true, Material = _cursorMaterial };
         AddChild(_notation); AddChild(_cursorLine);
         RefreshDrawing();
+    }
+
+    public override void _Process(double delta)
+    {
+        CollectPreload();
+        StartPreload();
     }
 
     public void SetBundle(MuseScoreBundle bundle, ScoreSettings settings = null)
@@ -55,23 +71,29 @@ public partial class ScoreStrip : Node2D
         var texture = Rasterize(bundle, cursor.Row, settings, RenderWidth);
         ClearCache();
         Bundle = bundle; Cursor = cursor; Settings = settings; Visible = settings.Enabled;
-        _cache.Add(cursor.Row, texture); _order.Enqueue(cursor.Row); _texture = texture;
+        CacheTexture(cursor.Row, texture); _texture = texture; _textureRow = cursor.Row;
         CursorGain = ScorePulse.Gain(-bundle.Events[cursor.Event].Seconds);
         RefreshDrawing();
+        StartPreload();
     }
 
     public void ApplySettings(ScoreSettings settings)
     {
         settings.Validate();
-        bool repaint = settings.Width != Settings.Width || settings.MainColor != Settings.MainColor;
+        bool repaint = settings.Width != Settings.Width ||
+            !string.Equals(settings.MainColor[6..], Settings.MainColor[6..], StringComparison.OrdinalIgnoreCase);
         if (repaint && Bundle != null)
         {
-            var texture = Rasterize(Bundle, Cursor.Row, settings, RenderWidth);
+            var texture = settings.Enabled ? Rasterize(Bundle, Cursor.Row, settings, RenderWidth) : null;
             ClearCache();
-            _cache.Add(Cursor.Row, texture); _order.Enqueue(Cursor.Row); _texture = texture;
+            if (texture != null) { CacheTexture(Cursor.Row, texture); _texture = texture; _textureRow = Cursor.Row; }
         }
+        if (Settings.Enabled && !settings.Enabled) CancelPreload();
+        if (settings.Enabled && Bundle != null && _textureRow != Cursor.Row)
+            SelectTexture(Cursor.Row, settings, RenderWidth);
         Settings = settings; Visible = settings.Enabled;
         RefreshDrawing();
+        StartPreload();
     }
 
     public void SetLayout(double width, double y) => ApplySettings(Settings with { Width = width, Y = y });
@@ -82,12 +104,13 @@ public partial class ScoreStrip : Node2D
         if (width == RenderWidth) return;
         if (Bundle != null)
         {
-            var texture = Rasterize(Bundle, Cursor.Row, Settings, width);
+            var texture = Settings.Enabled ? Rasterize(Bundle, Cursor.Row, Settings, width) : null;
             ClearCache();
-            _cache.Add(Cursor.Row, texture); _order.Enqueue(Cursor.Row); _texture = texture;
+            if (texture != null) { CacheTexture(Cursor.Row, texture); _texture = texture; _textureRow = Cursor.Row; }
         }
         RenderWidth = width;
         RefreshDrawing();
+        StartPreload();
     }
 
     public void ClearBundle()
@@ -99,45 +122,118 @@ public partial class ScoreStrip : Node2D
     public void SetTime(double seconds)
     {
         if (Bundle == null) return;
+        CollectPreload();
         var cursor = Bundle.CursorAt(seconds);
-        if (Cursor == null || cursor.Row != Cursor.Row || _texture == null)
-        {
-            if (!_cache.TryGetValue(cursor.Row, out var texture))
-            {
-                texture = Rasterize(Bundle, cursor.Row, Settings, RenderWidth);
-                _cache.Add(cursor.Row, texture); _order.Enqueue(cursor.Row);
-                if (_cache.Count > 3)
-                {
-                    int oldest = _order.Dequeue();
-                    _cache.Remove(oldest, out var expired); expired.Dispose();
-                }
-            }
-            _texture = texture;
-        }
+        if (Settings.Enabled && _textureRow != cursor.Row) SelectTexture(cursor.Row, Settings, RenderWidth);
         Cursor = cursor;
         CursorGain = ScorePulse.Gain(seconds - Bundle.Events[cursor.Event].Seconds);
         RefreshDrawing();
+        StartPreload();
+    }
+
+    private void SelectTexture(int row, ScoreSettings settings, int renderWidth)
+    {
+        if (!_cache.TryGetValue(row, out var texture))
+        {
+            // A cold seek remains exact; ordinary playback uses the prepared cache.
+            texture = Rasterize(Bundle, row, settings, renderWidth);
+            CacheTexture(row, texture);
+        }
+        _texture = texture; _textureRow = row;
+    }
+
+    private void CacheTexture(int row, ImageTexture texture)
+    {
+        _cache.Add(row, texture); _order.Enqueue(row);
+        while (_cache.Count > 3)
+        {
+            var wanted = new HashSet<int> { row };
+            if (Bundle != null && Cursor != null)
+            {
+                wanted.Add(Cursor.Row);
+                foreach (int next in UpcomingRows()) wanted.Add(next);
+            }
+            // Retain both prepared upcoming rows, even after a cold seek changed
+            // insertion order. Otherwise one preload can evict the other and repeat work.
+            int candidate = -1;
+            foreach (int cached in _order)
+                if (!wanted.Contains(cached)) { candidate = cached; break; }
+            if (candidate >= 0)
+                while (_order.Peek() != candidate) _order.Enqueue(_order.Dequeue());
+            int oldest = _order.Dequeue();
+            if (oldest == Cursor?.Row || oldest == row) { _order.Enqueue(oldest); continue; }
+            _cache.Remove(oldest, out var expired); expired.Dispose();
+        }
+    }
+
+    private IEnumerable<int> UpcomingRows()
+    {
+        var seen = new HashSet<int> { Cursor.Row };
+        for (int i = Cursor.Event + 1; i < Bundle.Events.Length && seen.Count < 3; i++)
+            if (seen.Add(Bundle.Events[i].Row)) yield return Bundle.Events[i].Row;
+    }
+
+    private void StartPreload()
+    {
+        if (_exiting || !Settings.Enabled || Bundle == null || _preloadTask != null) return;
+        foreach (int row in UpcomingRows())
+        {
+            if (_cache.ContainsKey(row) || _failedPreloads.Contains(row)) continue;
+            // Capture immutable inputs. The worker neither reads this node nor uploads textures.
+            var bundle = Bundle; var settings = Settings; int width = RenderWidth;
+            var cancellation = _preloadCancellation.Token;
+            _pendingRow = row; _pendingGeneration = _generation;
+            _preloadTask = Task.Run(() => ScoreRasterizer.Prepare(bundle, row, settings, width, cancellation), cancellation);
+            break;
+        }
+    }
+
+    private void CollectPreload()
+    {
+        if (_preloadTask == null || !_preloadTask.IsCompleted) return;
+        var task = _preloadTask; _preloadTask = null;
+        if (task.IsCanceled) return;
+        if (task.IsFaulted)
+        {
+            var error = task.Exception.GetBaseException();
+            if (_pendingGeneration == _generation)
+            {
+                _failedPreloads.Add(_pendingRow);
+                GD.PushWarning("乐谱预加载失败：" + error.Message);
+            }
+            return;
+        }
+        if (_pendingGeneration != _generation || Bundle == null || !Settings.Enabled || _cache.ContainsKey(_pendingRow)) return;
+        bool wanted = _pendingRow == Cursor.Row;
+        foreach (int row in UpcomingRows()) wanted |= row == _pendingRow;
+        if (!wanted) return;
+        var prepared = task.Result;
+        CacheTexture(_pendingRow, Upload(prepared));
+        PreloadCount++;
+        LastPreloadMilliseconds = prepared.Milliseconds;
+    }
+
+    private void CancelPreload()
+    {
+        _generation++;
+        _preloadCancellation.Cancel(); _preloadCancellation.Dispose();
+        _preloadCancellation = _exiting ? null : new CancellationTokenSource();
+        _failedPreloads.Clear();
     }
 
     private ImageTexture Rasterize(MuseScoreBundle bundle, int row, ScoreSettings settings, int renderWidth)
     {
         var watch = Stopwatch.StartNew();
-        using var image = new Image();
-        float scale = (float)(renderWidth * settings.Width / bundle.Pages[bundle.Rows[row].Page].Width);
-        // Backing is drawn independently, so notation brightness cannot brighten the paper.
-        Error error = image.LoadSvgFromString(bundle.SvgForRow(row, true, settings.MainColor), scale * 2);
-        if (error != Error.Ok || image.IsEmpty()) throw new InvalidDataException("乐谱 SVG 渲染失败：" + error);
-        // Supersample only the notation, then cache at the output resolution. A 2:1
-        // bilinear reduction averages the 2x2 coverage samples without sharpening rings.
-        // Extend transparent RGB before and after filtering to keep colored edges clean.
-        image.FixAlphaEdges();
-        image.Resize(Math.Max(1, (image.GetWidth() + 1) / 2), Math.Max(1, (image.GetHeight() + 1) / 2),
-            Image.Interpolation.Bilinear);
-        image.FixAlphaEdges();
-        var texture = ImageTexture.CreateFromImage(image);
+        var texture = Upload(ScoreRasterizer.Prepare(bundle, row, settings, renderWidth));
         RasterCount++;
         LastRasterMilliseconds = watch.Elapsed.TotalMilliseconds;
         return texture;
+    }
+
+    private static ImageTexture Upload(ScoreRasterizer.Prepared prepared)
+    {
+        using var image = Image.CreateFromData(prepared.Width, prepared.Height, false, Image.Format.Rgba8, prepared.Pixels);
+        return ImageTexture.CreateFromImage(image);
     }
 
     public override void _Draw()
@@ -149,7 +245,7 @@ public partial class ScoreStrip : Node2D
     {
         QueueRedraw();
         if (_notation == null) return;
-        _notation.Visible = _cursorLine.Visible = Bundle != null && _texture != null;
+        _notation.Visible = _cursorLine.Visible = Bundle != null && _texture != null && _textureRow == Cursor?.Row;
         _notation.Texture = _texture;
         if (Bundle == null || _texture == null) return;
         var row = Bundle.Rows[Cursor.Row];
@@ -164,6 +260,7 @@ public partial class ScoreStrip : Node2D
         _notation.Scale = new Vector2(rect.Size.X / _texture.GetWidth(), rect.Size.Y / _texture.GetHeight());
         _notation.RegionRect = source;
         _notationMaterial.SetShaderParameter("brightness", Settings.Brightness);
+        _notationMaterial.SetShaderParameter("notation_color", new Color(Settings.MainColor));
         float x = rect.Position.X + (float)(Cursor.X * scale);
         float top = rect.Position.Y + (float)((row.Top - row.CropTop) * scale);
         float bottom = top + (float)(row.Height * scale);
@@ -174,14 +271,23 @@ public partial class ScoreStrip : Node2D
 
     private void ClearCache()
     {
-        _texture = null;
+        CancelPreload();
+        _texture = null; _textureRow = -1;
         foreach (var texture in _cache.Values) texture.Dispose();
         _cache.Clear(); _order.Clear();
     }
 
     public override void _ExitTree()
     {
+        _exiting = true;
         ClearCache();
+        // Finish native CPU image calls before this scene (or the engine) is torn down.
+        if (_preloadTask != null)
+        {
+            try { _preloadTask.GetAwaiter().GetResult(); }
+            catch (Exception) { /* Cancellation/errors are irrelevant to a discarded scene. */ }
+            _preloadTask = null;
+        }
         _panel.Dispose();
         _notationMaterial?.Dispose(); _cursorMaterial?.Dispose();
     }

@@ -127,6 +127,8 @@ public partial class Main
             ["brightness"] = score.Settings.Brightness, ["cursor_color"] = score.Settings.CursorColor,
             ["cursor_brightness"] = score.Settings.CursorBrightness, ["cursor_gain"] = score.CursorGain,
             ["raster_count"] = score.RasterCount, ["cached_rows"] = score.CachedRows, ["raster_ms"] = score.LastRasterMilliseconds,
+            ["preload_count"] = score.PreloadCount, ["preload_pending"] = score.Preloading,
+            ["preload_ms"] = score.LastPreloadMilliseconds,
             ["render_width"] = score.RenderWidth, ["texture_width"] = score.TextureSize.X, ["texture_height"] = score.TextureSize.Y
         };
     }
