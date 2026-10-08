@@ -1,6 +1,11 @@
 shader_type canvas_item;
 render_mode unshaded;
 
+uniform sampler2D glow_level_0 : filter_linear, repeat_disable;
+uniform sampler2D glow_level_1 : filter_linear, repeat_disable;
+uniform sampler2D glow_level_2 : filter_linear, repeat_disable;
+uniform float glow_intensity = 0.0;
+
 // Wide keyboard light is applied AFTER HDR Glow. This soft field cannot bloom
 // outside the keyboard, while contact accents and particles retain their own Glow.
 uniform vec4 keyboard_rect = vec4(0.0);
@@ -21,6 +26,10 @@ vec3 linear_to_srgb(vec3 value) {
 
 void fragment() {
     vec4 pixel = texture(TEXTURE, UV);
+    if (glow_intensity > 0.0) {
+        pixel.rgb += glow_intensity * (texture(glow_level_0, UV).rgb * 0.8 +
+            texture(glow_level_1, UV).rgb * 0.4 + texture(glow_level_2, UV).rgb * 0.1);
+    }
     vec3 rgb = clamp(linear_to_srgb(pixel.rgb), 0.0, 1.0);
     if (key_light_strength > 0.0 && key_light_count > 0 &&
         UV.x >= keyboard_rect.x && UV.x <= keyboard_rect.x + keyboard_rect.z &&

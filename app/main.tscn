@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://bau4p41a8arlt"]
+[gd_scene load_steps=12 format=3 uid="uid://bau4p41a8arlt"]
 
 [ext_resource type="Script" uid="uid://dvtf2sqeokymw" path="res://app/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://visualizer/visualizer.tscn" id="2_visualizer"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://audio/AudioPlayback.cs" id="7_audio"]
 [ext_resource type="Shader" path="res://visualizer/linear_to_srgb.gdshader" id="8_output"]
 [ext_resource type="Script" path="res://video/VideoBackground.cs" id="9_video"]
+[ext_resource type="Script" path="res://app/PreviewSurface.cs" id="10_preview"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_output"]
 shader = ExtResource("8_output")
@@ -144,7 +145,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_minimum_size = Vector2(320, 180)
 
-[node name="Preview" type="TextureRect" parent="Margin/Content/Body/PreviewArea"]
+[node name="Preview" type="Control" parent="Margin/Content/Body/PreviewArea"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -152,8 +153,7 @@ custom_minimum_size = Vector2(0, 240)
 layout_mode = 1
 size_flags_horizontal = 3
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
+script = ExtResource("10_preview")
 
 
 [node name="EmptyState" type="CenterContainer" parent="Margin/Content/Body/PreviewArea"]
