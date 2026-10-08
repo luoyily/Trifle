@@ -16,6 +16,7 @@ public partial class ProjectMenu : MenuButton
     private string _projectPath = "";
     private Button _withoutAudio;
     private bool _missingAudio;
+    private bool _missingScore;
 
     public override void _Ready()
     {
@@ -51,14 +52,15 @@ public partial class ProjectMenu : MenuButton
     public void ClearMissingRequest() => _missing.Hide();
     public bool HasOpenDialog() => GetPopup().Visible || _files.Visible || _missing.Visible;
 
-    public void RequestMidiReplacement(string message) => RequestReplacement(message, false);
+    public void RequestMidiReplacement(string message, bool score = false) => RequestReplacement(message, false, score);
     public void RequestAudioReplacement(string message) => RequestReplacement(message, true);
 
-    private void RequestReplacement(string message, bool audio)
+    private void RequestReplacement(string message, bool audio, bool score = false)
     {
         _missingAudio = audio;
-        _missing.Title = audio ? "项目音频无法载入" : "项目 MIDI 无法载入";
-        _missing.OkButtonText = audio ? "重新选择音频…" : "重新选择 MIDI…";
+        _missingScore = score;
+        _missing.Title = audio ? "项目音频无法载入" : score ? "项目乐谱无法载入" : "项目 MIDI 无法载入";
+        _missing.OkButtonText = audio ? "重新选择音频…" : score ? "重新选择乐谱…" : "重新选择 MIDI…";
         _withoutAudio.Visible = audio;
         _missing.DialogText = message + "\n重新选择后继续；取消会保留当前项目。";
         _missing.PopupCentered();
@@ -75,12 +77,12 @@ public partial class ProjectMenu : MenuButton
             ProjectFileAction.OpenProject => "打开 Trifle 项目",
             ProjectFileAction.OpenPreset => "加载视觉预设",
             ProjectFileAction.SavePreset => "保存视觉预设",
-            ProjectFileAction.RelinkMidi => "重新选择项目的 MIDI 文件",
+            ProjectFileAction.RelinkMidi => _missingScore ? "重新选择项目的乐谱数据包" : "重新选择项目的 MIDI 文件",
             ProjectFileAction.RelinkAudio => "重新选择项目的音频",
             _ => "保存 Trifle 项目"
         };
         _files.Filters = action == ProjectFileAction.RelinkMidi
-            ? new[] { "*.mid,*.midi ; MIDI 文件" }
+            ? (_missingScore ? new[] { "*.mscz,*.json ; MuseScore 乐谱 / 数据包" } : new[] { "*.mid,*.midi ; MIDI 文件" })
             : action == ProjectFileAction.RelinkAudio ? new[] { "*.ogg,*.mp3,*.wav ; 音频（OGG / MP3 / WAV）", "*.ogg ; OGG / Vorbis 音频", "*.mp3 ; MP3 音频", "*.wav ; WAV 音频" }
             : preset ? new[] { "*.trifle-preset.json ; Trifle 视觉预设" }
             : new[] { "*.trifle.json ; Trifle 项目" };

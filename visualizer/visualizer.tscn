@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://visualizer/Visualizer.cs" id="1_visualizer"]
 [ext_resource type="Script" path="res://visualizer/NoteRenderer.cs" id="2_notes"]
@@ -8,6 +8,7 @@
 [ext_resource type="Shader" path="res://visualizer/hit.gdshader" id="6_hit_shader"]
 [ext_resource type="Script" path="res://visualizer/ParticleEffects.cs" id="7_particles"]
 [ext_resource type="Script" path="res://visualizer/BackgroundLayer.cs" id="8_background"]
+[ext_resource type="Script" path="res://score/ScoreStrip.cs" id="9_score"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hit"]
 shader = ExtResource("6_hit_shader")
@@ -52,3 +53,6 @@ script = ExtResource("5_hits")
 
 [node name="ParticleEffects" type="MultiMeshInstance2D" parent="."]
 script = ExtResource("7_particles")
+
+[node name="Score" type="Node2D" parent="."]
+script = ExtResource("9_score")

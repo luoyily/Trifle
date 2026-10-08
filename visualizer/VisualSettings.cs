@@ -21,6 +21,7 @@ public sealed record VisualSettings
     public KeyboardLightSettings KeyboardLights { get; init; } = new();
     public ContactLineSettings ContactLine { get; init; } = new();
     public ParticleSettings Particles { get; init; } = new();
+    public Trifle.Score.ScoreSettings Score { get; init; } = new();
 
     public void Validate(int? trackCount = null)
     {
@@ -45,6 +46,8 @@ public sealed record VisualSettings
         ContactLine.Validate();
         if (Particles == null) throw new ArgumentException("粒子参数不能为空值。");
         Particles.Validate();
+        if (Score == null) throw new ArgumentException("乐谱参数不能为空值。");
+        Score.Validate();
     }
 
     private static void ValidateColors(Dictionary<int, string> colors, int? count, string label)

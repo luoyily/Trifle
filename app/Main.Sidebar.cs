@@ -21,7 +21,7 @@ public partial class Main
         _projectPath = "";
         _projectMenu.SetProjectPath("");
         SetSong(new MidiSong("", 1, Array.Empty<MidiTrack>(), Array.Empty<MidiTempoChange>(), Array.Empty<MidiNote>(), 0));
-        SetStatus("已移除 MIDI 和关联音频。打开 MIDI 开始新曲目。");
+        SetStatus("已移除 MIDI、关联音频和乐谱。打开 MIDI 或乐谱开始新曲目。");
     }
 
     public void HandleFilesDropped(string[] paths)
@@ -31,14 +31,15 @@ public partial class Main
         var audio = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".ogg" or ".mp3" or ".wav").ToArray();
         var image = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp").ToArray();
         var video = paths.Where(Trifle.Video.VideoBackgroundSettings.IsVideoPath).ToArray();
-        if (midi.Length > 1 || audio.Length > 1 || image.Length + video.Length > 1)
+        var score = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".json" or ".mscz").ToArray();
+        if (midi.Length + score.Length > 1 || audio.Length > 1 || image.Length + video.Length > 1)
         {
-            SetStatus("每次请只拖入一个 MIDI、一份音频和一个背景文件（图片或视频）。");
+            SetStatus("每次请只拖入一个 MIDI 或乐谱数据包、一份音频和一个背景文件（图片或视频）。");
             return;
         }
-        if (midi.Length + audio.Length + image.Length + video.Length != paths.Length)
+        if (midi.Length + score.Length + audio.Length + image.Length + video.Length != paths.Length)
         {
-            SetStatus("支持拖入 MIDI、音频、背景图片，以及 MP4 / MKV / MOV / WebM / AVI / M4V 背景视频。");
+            SetStatus("支持拖入 MIDI、MuseScore 乐谱（MSCZ / JSON）、音频、背景图片和视频。");
             return;
         }
         if (midi.Length > 0)
@@ -46,6 +47,15 @@ public partial class Main
             LoadMidiFile(midi[0]);
             // Do not attach dropped media to a previous song if MIDI loading failed.
             if (_song.SourcePath != midi[0]) return;
+        }
+        if (score.Length > 0)
+        {
+            if (Trifle.Score.MuseScoreImporter.IsScoreFile(score[0]))
+            {
+                _ = ImportDroppedScoreAsync(score[0], audio.FirstOrDefault(), image.FirstOrDefault(), video.FirstOrDefault());
+                return;
+            }
+            if (!LoadScoreBundleFile(score[0])) return;
         }
         if (audio.Length > 0) LoadAudioFile(audio[0]);
         if (image.Length > 0) LoadBackgroundImage(image[0]);
@@ -87,6 +97,7 @@ public partial class Main
         var contents = new List<string> { "MIDI 音符", "键盘", kind };
         if (_visualizer.Particles.Enabled || _visualizer.Particles.Curves) contents.Add("粒子 / 流线");
         if (_audio.Settings.Enabled && _audio.Stream != null) contents.Add("音频");
+        if (_visualizer.Score.Bundle != null && _visualizer.Score.Settings.Enabled) contents.Add("同步乐谱");
         var warnings = new List<string>();
         if (background.Type == BackgroundType.Video && background.Video.Path.Length > 0)
         {
@@ -98,9 +109,12 @@ public partial class Main
             warnings.Add("背景源文件不可用，将使用已加载的图片。");
         if (_audio.Settings.Enabled && _audio.Settings.Path.Length > 0 && !File.Exists(_audio.Settings.Path))
             warnings.Add("音频源文件不可用，请重新选择音频后导出。");
+        if (_scorePath.Length > 0 && !File.Exists(_scorePath))
+            warnings.Add("乐谱源文件不可用，将使用已加载的乐谱。");
         _exportDialog.SetContents(string.Join(" · ", contents), string.Join("\n", warnings),
             background.Type == BackgroundType.Video ? _videoBackground.Error : _visualizer.BackgroundWarning);
-        _quick.RefreshMidi(_song.SourcePath, File.Exists(_song.SourcePath));
+        _quick.RefreshMidi(_song.SourcePath, File.Exists(_song.SourcePath), _midiFromScore);
+        _quick.RefreshScore(_scorePath, _visualizer.Score.Bundle != null && File.Exists(_scorePath), _visualizer.Score.Bundle?.Title ?? "");
         _quick.RefreshAudio(_audio.Settings, _audio.Duration, _audio.Stream != null && File.Exists(_audio.Settings.Path));
     }
 }

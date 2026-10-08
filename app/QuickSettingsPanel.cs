@@ -16,13 +16,15 @@ public partial class QuickSettingsPanel : VBoxContainer
     public event Action ImageClearRequested;
     public event Action<string> VideoRequested;
     public event Action VideoClearRequested;
+    public event Action<string> ScoreRequested;
+    public event Action ScoreClearRequested;
     public event Action<int> BackgroundTypeChanged;
     public event Action<Color> ColorChanged;
     public event Action<Color> EndColorChanged;
     private OptionButton _type;
     private ColorPickerButton _color, _endColor;
-    private FileDialog _audioFiles, _imageFiles, _videoFiles;
-    private bool _busy, _syncing, _hasMidi, _hasAudio, _hasMedia;
+    private FileDialog _audioFiles, _imageFiles, _videoFiles, _scoreFiles;
+    private bool _busy, _syncing, _hasMidi, _hasAudio, _hasMedia, _hasScore;
 
     public override void _Ready()
     {
@@ -32,6 +34,8 @@ public partial class QuickSettingsPanel : VBoxContainer
         _audioFiles = GetNode<FileDialog>("AudioFiles");
         _imageFiles = GetNode<FileDialog>("ImageFiles");
         _videoFiles = GetNode<FileDialog>("VideoFiles");
+        _scoreFiles = GetNode<FileDialog>("ScoreFiles");
+        _scoreFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
         _audioFiles.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
         _imageFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyPictures);
         _videoFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyVideos);
@@ -50,9 +54,13 @@ public partial class QuickSettingsPanel : VBoxContainer
         _audioFiles.FileSelected += path => { if (!_busy) AudioRequested?.Invoke(path); };
         _imageFiles.FileSelected += path => { if (!_busy) ImageRequested?.Invoke(path); };
         _videoFiles.FileSelected += path => { if (!_busy) VideoRequested?.Invoke(path); };
+        GetNode<Button>("Score/Load").Pressed += () => { if (!_busy) _scoreFiles.PopupCenteredRatio(0.7f); };
+        GetNode<Button>("Score/Clear").Pressed += () => { if (!_busy) ScoreClearRequested?.Invoke(); };
+        _scoreFiles.FileSelected += path => { if (!_busy) ScoreRequested?.Invoke(path); };
         RefreshMidi("", false);
         RefreshAudio(new AudioSettings(), 0, false);
         RefreshBackground(new BackgroundSettings(), false);
+        RefreshScore("", false);
     }
 
     private void FileStatus(string node, string path, bool available, string empty, string detail = "")
@@ -62,10 +70,23 @@ public partial class QuickSettingsPanel : VBoxContainer
         label.TooltipText = path.Length == 0 ? empty : path + (available ? "" : "\n文件不可用，请重新选择");
     }
 
-    public void RefreshMidi(string path, bool available)
+    public void RefreshMidi(string path, bool available, bool fromScore = false)
     {
         _hasMidi = path.Length > 0;
         FileStatus("Midi/File", path, available, "未选择文件");
+        if (fromScore && path.Length > 0) GetNode<Label>("Midi/File").Text = available ? "乐谱内 MIDI" : "不可用 · 乐谱内 MIDI";
+        SetBusy(_busy);
+    }
+
+    public void RefreshScore(string path, bool available, string title = "")
+    {
+        _hasScore = path.Length > 0;
+        FileStatus("Score/File", path, available, "未选择文件");
+        if (available && title.Length > 0)
+        {
+            GetNode<Label>("Score/File").Text = title + " · " + Path.GetFileName(path);
+            GetNode<Label>("Score/File").TooltipText = title + "\n" + path;
+        }
         SetBusy(_busy);
     }
 
@@ -102,13 +123,14 @@ public partial class QuickSettingsPanel : VBoxContainer
     public void SetBusy(bool busy)
     {
         _busy = busy;
-        foreach (string path in new[] { "Midi/Load", "Audio/Load", "Background/Image/Load" }) GetNode<Button>(path).Disabled = busy;
+        foreach (string path in new[] { "Midi/Load", "Audio/Load", "Background/Image/Load", "Score/Load" }) GetNode<Button>(path).Disabled = busy;
         GetNode<Button>("Midi/Clear").Disabled = busy || !_hasMidi;
         GetNode<Button>("Audio/Clear").Disabled = busy || !_hasAudio;
         GetNode<Button>("Background/Image/Clear").Disabled = busy || !_hasMedia;
+        GetNode<Button>("Score/Clear").Disabled = busy || !_hasScore;
         _type.Disabled = _color.Disabled = _endColor.Disabled = busy;
     }
 
-    public bool HasOpenPopup() => _audioFiles.Visible || _imageFiles.Visible || _videoFiles.Visible || _type.GetPopup().Visible ||
+    public bool HasOpenPopup() => _audioFiles.Visible || _imageFiles.Visible || _videoFiles.Visible || _scoreFiles.Visible || _type.GetPopup().Visible ||
         _color.GetPopup().Visible || _endColor.GetPopup().Visible;
 }

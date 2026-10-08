@@ -24,13 +24,13 @@ McpInteractionServer="*res://app/development_bridge.gd"
 window/size/viewport_width=1280
 window/size/viewport_height=900
 
-[gui]
-
-theme/custom="res://app/theme/trifle_theme.tres"
-
 [dotnet]
 
 project/assembly_name="Trifle"
+
+[gui]
+
+theme/custom="res://app/theme/trifle_theme.tres"
 
 [physics]
 

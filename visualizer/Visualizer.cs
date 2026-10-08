@@ -27,11 +27,13 @@ public partial class Visualizer : Node2D
     private ContactLineSettings _contactLine = new();
     private HitEffects _hits;
     private ParticleEffects _particles;
+    public Trifle.Score.ScoreStrip Score { get; private set; }
     private ParticleSettings _particleSettings = new();
     private Godot.Environment _environment;
     private BackgroundLayer _backgroundImage;
     private Texture2D _imageTexture, _videoTexture;
     private ShaderMaterial _outputMaterial;
+    private HdrGlow _hdrGlow;
     private readonly Godot.Collections.Array<Vector4> _keyLightSources = new();
     private readonly Godot.Collections.Array<Vector4> _keyLightColors = new();
     public string BackgroundWarning { get; private set; } = "";
@@ -51,6 +53,7 @@ public partial class Visualizer : Node2D
         _notes = GetNode<NoteRenderer>("Notes");
         _hits = GetNode<HitEffects>("HitEffects");
         _particles = GetNode<ParticleEffects>("ParticleEffects");
+        Score = GetNode<Trifle.Score.ScoreStrip>("Score");
         _backgroundImage = GetNode<BackgroundLayer>("BackgroundImage");
         _environment = GetNode<WorldEnvironment>("WorldEnvironment").Environment;
         for (int i = 0; i < 128; i++) { _keyLightSources.Add(Vector4.Zero); _keyLightColors.Add(Vector4.Zero); }
@@ -79,10 +82,16 @@ public partial class Visualizer : Node2D
         _notes.UpdateAt(_song, _layout, _keyboardBounds, _time, Math.Max(0.1, LookAheadSeconds), _colors);
         _hits.UpdateAt(_layout, _keyboardBounds, _time, _keyboard, _keyboardLights, _contactLine);
         _particles.UpdateAt(_layout, _keyboardBounds, _time, _colors);
+        Score.SetTime(_time);
         UpdateKeyboardAreaLight();
     }
 
-    public void SetOutputMaterial(ShaderMaterial material) => _outputMaterial = material;
+    public void SetOutputMaterial(ShaderMaterial material, HdrGlow glow = null)
+    {
+        _outputMaterial = material;
+        _hdrGlow = glow;
+        SetGlow(_glow);
+    }
 
     private void UpdateKeyboardAreaLight()
     {
@@ -166,8 +175,11 @@ public partial class Visualizer : Node2D
     {
         settings.Validate();
         _glow = settings;
-        _environment.GlowEnabled = settings.Enabled;
+        // Built-in Glow thresholds after filtering and scales its halo in render pixels.
+        // The shared output uses our reference pyramid instead.
+        _environment.GlowEnabled = _hdrGlow == null && settings.Enabled;
         _environment.GlowIntensity = (float)settings.Intensity;
+        _hdrGlow?.Configure(settings);
     }
 
     public void SetKeyboardLights(KeyboardLightSettings settings)
@@ -253,7 +265,7 @@ public partial class Visualizer : Node2D
         ChannelColors = Enumerable.Range(0, 16).ToDictionary(index => index, index => _colors.GetChannelColor(index).ToHtml()),
         TrackColors = Enumerable.Range(0, _song?.Tracks.Length ?? 0).ToDictionary(index => index, index => _colors.GetTrackColor(index).ToHtml()),
         Keyboard = _appearance, Background = _background, Note = _noteAppearance, Glow = _glow, KeyboardLights = _keyboardLights, ContactLine = _contactLine,
-        Particles = _particleSettings
+        Particles = _particleSettings, Score = Score.Settings
     };
 
     // Presets can come from another song; unmatched track indices are reported to the caller.
@@ -270,6 +282,7 @@ public partial class Visualizer : Node2D
         SetKeyboardLights(settings.KeyboardLights);
         SetContactLine(settings.ContactLine);
         SetParticles(settings.Particles);
+        Score.ApplySettings(settings.Score);
         SetKeyboardAppearance(settings.Keyboard);
         _colors.ResetChannels();
         _colors.SetSong(_song);

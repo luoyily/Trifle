@@ -10,6 +10,14 @@ using Trifle.Audio;
 
 if (args.Contains("--effect-settings")) { EffectSettingsChecks.Run(); return; }
 if (args.Contains("--transport")) { TransportChecks.Run(); return; }
+if (args.Contains("--score-bundle")) { ScoreBundleChecks.Run(args.LastOrDefault()); return; }
+if (args.Contains("--score-import")) { await ScoreImportChecks.RunAsync(args.LastOrDefault()); return; }
+// A controlled converter used only by cancellation checks. It writes a partial file, then waits.
+if (args.Contains("--score-media"))
+{
+    File.WriteAllText(args[Array.IndexOf(args, "-o") + 1], "{}");
+    await Task.Delay(10000); return;
+}
 if (args.Contains("--encoding")) { EncodingChecks.Run(); return; }
 if (args.Contains("--audio-timeline")) { AudioTimelineChecks.Run(); return; }
 if (args.Contains("--video-background")) { await VideoBackgroundChecks.RunAsync(args.LastOrDefault()); return; }

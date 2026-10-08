@@ -34,7 +34,7 @@ layout_mode = 2
 text = "×"
 theme_type_variation = &"QuietButton"
 custom_minimum_size = Vector2(28, 32)
-tooltip_text = "移除 MIDI 和关联音频"
+tooltip_text = "移除 MIDI、关联音频和乐谱"
 
 [node name="Audio" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -139,16 +139,24 @@ theme_type_variation = &"MutedLabel"
 
 [node name="File" type="Label" parent="Score"]
 layout_mode = 2
-text = "暂不可用"
+text = "未选择文件"
 size_flags_horizontal = 3
-theme_type_variation = &"HelpLabel"
+clip_text = true
+text_overrun_behavior = 3
+custom_minimum_size = Vector2(40, 0)
 
 [node name="Load" type="Button" parent="Score"]
 layout_mode = 2
 text = "选择…"
 theme_type_variation = &"QuietButton"
-disabled = true
-tooltip_text = "MuseScore 乐谱支持将在后续版本加入"
+tooltip_text = "选择 MuseScore 乐谱或 JSON 数据包，同时载入同源 MIDI"
+
+[node name="Clear" type="Button" parent="Score"]
+layout_mode = 2
+text = "×"
+theme_type_variation = &"QuietButton"
+custom_minimum_size = Vector2(28, 32)
+tooltip_text = "移除乐谱，保留当前 MIDI"
 
 [node name="AudioFiles" type="FileDialog" parent="."]
 layout_mode = 2
@@ -176,3 +184,12 @@ file_mode = 0
 access = 2
 use_native_dialog = true
 filters = PackedStringArray("*.mp4,*.mkv,*.mov,*.webm,*.avi,*.m4v ; 视频文件")
+
+[node name="ScoreFiles" type="FileDialog" parent="."]
+layout_mode = 2
+title = "选择 MuseScore 乐谱"
+size = Vector2i(800, 500)
+file_mode = 0
+access = 2
+use_native_dialog = true
+filters = PackedStringArray("*.mscz,*.json ; MuseScore 乐谱 / 数据包", "*.mscz ; MuseScore 乐谱", "*.json ; MuseScore 数据包")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://app/SettingsPanel.cs" id="1"]
 [ext_resource type="PackedScene" path="res://app/audio_panel.tscn" id="2_audio"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://app/quick_settings_panel.tscn" id="8_quick"]
 [ext_resource type="PackedScene" path="res://app/contact_line_panel.tscn" id="9_line"]
 [ext_resource type="PackedScene" path="res://app/glow_panel.tscn" id="10_glow"]
+[ext_resource type="PackedScene" path="res://app/score_panel.tscn" id="11_score"]
 
 [node name="SettingsPanel" type="PanelContainer"]
 custom_minimum_size = Vector2(380, 0)
@@ -62,6 +63,9 @@ theme_override_constants/separation = 6
 layout_mode = 2
 
 [node name="BackgroundPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("3_background")]
+layout_mode = 2
+
+[node name="ScorePanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("11_score")]
 layout_mode = 2
 
 [node name="Keyboard" type="VBoxContainer" parent="Margin/Content/Scroll/Groups"]
