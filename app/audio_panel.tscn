@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://app/AudioPanel.cs" id="1"]
+[ext_resource type="PackedScene" path="res://app/score_sync_panel.tscn" id="2_sync"]
 
 [node name="AudioPanel" type="VBoxContainer"]
 theme_override_constants/separation = 12
@@ -53,4 +54,7 @@ layout_mode = 2
 autowrap_mode = 3
 text = "正值延后；负值跳过音频开头。"
 theme_type_variation = &"HelpLabel"
+
+[node name="ScoreSyncPanel" parent="Fields/Content" instance=ExtResource("2_sync")]
+layout_mode = 2
 

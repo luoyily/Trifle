@@ -13,6 +13,8 @@ public sealed record ProjectData
     [JsonRequired] public string MidiPath { get; init; } = "";
     public bool MidiFromScore { get; init; }
     public string ScorePath { get; init; } = "";
+    public string ExternalMidiPath { get; init; } = "";
+    public Trifle.Score.ScoreSyncSettings ScoreSync { get; init; } = new();
     public VisualSettings Visual { get; init; } = new();
     public ExportPreferences Export { get; init; } = new();
     public AudioSettings Audio { get; init; } = new();
@@ -26,7 +28,8 @@ public sealed record ProjectData
         if (Kind != "trifle-project" || Version != 1) throw new ArgumentException("不支持的项目类型或格式版本。");
         if (string.IsNullOrWhiteSpace(MidiPath)) throw new ArgumentException("项目缺少 MIDI 引用。");
         if (ScorePath == null) throw new ArgumentException("乐谱引用不能为空值。");
-        if (ScorePath.Length > 0 && !MidiFromScore) throw new ArgumentException("当前乐谱同步需使用数据包内的 MIDI。");
+        if (ExternalMidiPath == null || ScoreSync == null) throw new ArgumentException("乐谱同步参数不能为空值。");
+        ScoreSync.Validate();
         if (Visual == null || Export == null || Audio == null) throw new ArgumentException("项目参数不能为空值。");
         if (ExpandedSections == null) throw new ArgumentException("侧栏折叠状态不能为空值。");
         Visual.Validate();

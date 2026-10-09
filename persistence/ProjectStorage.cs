@@ -51,6 +51,7 @@ public static class ProjectStorage
         {
             MidiPath = MakeReference(data.MidiPath, path),
             ScorePath = MakeReference(data.ScorePath, path),
+            ExternalMidiPath = MakeReference(data.ExternalMidiPath, path),
             Audio = data.Audio with { Path = MakeReference(data.Audio.Path, path) },
             Visual = MakeVisualReferences(data.Visual, path),
             Export = data.Export with { OutputPath = MakeReference(data.Export.OutputPath, path) }

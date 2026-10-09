@@ -142,7 +142,8 @@ internal static class ScoreBundleChecks
             File.WriteAllText(documentPath, """{"kind":"trifle-project","version":1,"midiPath":"song.mid"}""");
             var legacy = ProjectStorage.LoadProject(documentPath);
             Check(!legacy.MidiFromScore && legacy.ScorePath == "" && legacy.Visual.Score == new ScoreSettings(), "Legacy projects load unchanged with default score settings");
-            Reject(() => new ProjectData { MidiPath = "song.mid", ScorePath = "piece.json" }.Validate(), "External MIDI score alignment is excluded from the minimal feature set");
+            new ProjectData { MidiPath = "song.mid", ScorePath = "piece.json" }.Validate();
+            Check(true, "Projects allow independent external MIDI and score references");
         }
         finally
         {

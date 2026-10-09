@@ -25,11 +25,16 @@ public sealed class MuseScoreBundle
     public ScorePage[] Pages { get; }
     public ScoreRow[] Rows { get; }
     public ScoreEvent[] Events { get; }
+    public ScoreMeasureEvent[] MeasureEvents { get; }
+    public ScoreTimeline Timeline { get; }
     public byte[] Midi { get; }
     public double DurationSeconds { get; }
     private MuseScoreBundle(string title, ScorePage[] pages, ScoreRow[] rows,
-        ScoreEvent[] events, byte[] midi, double duration)
-    { Title = title; Pages = pages; Rows = rows; Events = events; Midi = midi; DurationSeconds = duration; }
+        ScoreEvent[] events, ScoreMeasureEvent[] measureEvents, byte[] midi, double duration)
+    {
+        Title = title; Pages = pages; Rows = rows; Events = events; Midi = midi; DurationSeconds = duration;
+        MeasureEvents = measureEvents; Timeline = new ScoreTimeline(rows, events, duration);
+    }
 
     public static MuseScoreBundle Read(string path) => Parse(File.ReadAllText(path));
 
@@ -109,34 +114,15 @@ public sealed class MuseScoreBundle
         }
         byte[] midi = data.TryGetProperty("midi", out var encodedMidi) && encodedMidi.ValueKind == JsonValueKind.String
             ? Convert.FromBase64String(encodedMidi.GetString()) : Array.Empty<byte>();
-        return new MuseScoreBundle(title, pages, rows, events, midi, duration);
+        var measureEvents = Xml(Decode(mpos)).Root?.Elements().FirstOrDefault(e => e.Name.LocalName == "events")?.Elements()
+            .Select(e => new ScoreMeasureEvent(Integer(e, "elid"), Attribute(e, "position") / 1000)).ToArray()
+            ?? Array.Empty<ScoreMeasureEvent>();
+        if (measureEvents.Any(e => !measures.ContainsKey(e.MeasureId) || e.Seconds < 0))
+            throw new InvalidDataException("乐谱小节播放事件无效。");
+        return new MuseScoreBundle(title, pages, rows, events, measureEvents, midi, duration);
     }
 
-    public ScoreCursor CursorAt(double seconds)
-    {
-        if (!double.IsFinite(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
-        int low = 0, high = Events.Length;
-        while (low < high)
-        {
-            int middle = low + (high - low) / 2;
-            if (Events[middle].Seconds <= seconds) low = middle + 1; else high = middle;
-        }
-        int index = Math.Max(0, low - 1);
-        var current = Events[index];
-        double x = current.X;
-        if (index + 1 < Events.Length && seconds >= current.Seconds)
-        {
-            var next = Events[index + 1];
-            // A repeat inside a system jumps at the event; never slide backwards.
-            if (next.Row != current.Row || next.X >= current.X)
-            {
-                double endX = next.Row == current.Row ? next.X : Math.Max(current.X, Rows[current.Row].Right);
-                double factor = Math.Clamp((seconds - current.Seconds) / Math.Max(1e-9, next.Seconds - current.Seconds), 0, 1);
-                x += (endX - x) * factor;
-            }
-        }
-        return new ScoreCursor(index, current.Row, x);
-    }
+    public ScoreCursor CursorAt(double seconds) => Timeline.CursorAt(seconds);
 
     public string SvgForRow(int index, bool removeBackground = true, string mainColor = null)
     {

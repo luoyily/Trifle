@@ -11,6 +11,7 @@ using Trifle.Audio;
 if (args.Contains("--effect-settings")) { EffectSettingsChecks.Run(); return; }
 if (args.Contains("--transport")) { TransportChecks.Run(); return; }
 if (args.Contains("--score-bundle")) { ScoreBundleChecks.Run(args.LastOrDefault()); return; }
+if (args.Contains("--score-sync")) { ScoreSyncChecks.Run(args.LastOrDefault()); return; }
 if (args.Contains("--score-import")) { await ScoreImportChecks.RunAsync(args.LastOrDefault()); return; }
 // A controlled converter used only by cancellation checks. It writes a partial file, then waits.
 if (args.Contains("--score-media"))

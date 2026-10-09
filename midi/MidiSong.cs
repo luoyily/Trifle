@@ -13,4 +13,7 @@ public sealed record MidiTempoChange(double TimeSeconds, double BeatsPerMinute);
 
 public sealed record MidiSong(
     string SourcePath, int Format, MidiTrack[] Tracks,
-    MidiTempoChange[] TempoChanges, MidiNote[] Notes, double DurationSeconds);
+    MidiTempoChange[] TempoChanges, MidiNote[] Notes, double DurationSeconds)
+{
+    public MidiBarGrid BarGrid { get; init; }
+}

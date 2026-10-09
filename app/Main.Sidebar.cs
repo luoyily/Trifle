@@ -32,9 +32,9 @@ public partial class Main
         var image = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".webp").ToArray();
         var video = paths.Where(Trifle.Video.VideoBackgroundSettings.IsVideoPath).ToArray();
         var score = paths.Where(p => Path.GetExtension(p).ToLowerInvariant() is ".json" or ".mscz").ToArray();
-        if (midi.Length + score.Length > 1 || audio.Length > 1 || image.Length + video.Length > 1)
+        if (midi.Length > 1 || score.Length > 1 || audio.Length > 1 || image.Length + video.Length > 1)
         {
-            SetStatus("每次请只拖入一个 MIDI 或乐谱数据包、一份音频和一个背景文件（图片或视频）。");
+            SetStatus("每次可拖入一份 MIDI、一份乐谱、一份音频和一个背景文件（图片或视频）。");
             return;
         }
         if (midi.Length + score.Length + audio.Length + image.Length + video.Length != paths.Length)
@@ -42,7 +42,7 @@ public partial class Main
             SetStatus("支持拖入 MIDI、MuseScore 乐谱（MSCZ / JSON）、音频、背景图片和视频。");
             return;
         }
-        if (midi.Length > 0)
+        if (midi.Length > 0 && score.Length == 0)
         {
             LoadMidiFile(midi[0]);
             // Do not attach dropped media to a previous song if MIDI loading failed.
@@ -52,10 +52,20 @@ public partial class Main
         {
             if (Trifle.Score.MuseScoreImporter.IsScoreFile(score[0]))
             {
-                _ = ImportDroppedScoreAsync(score[0], audio.FirstOrDefault(), image.FirstOrDefault(), video.FirstOrDefault());
+                _ = ImportDroppedScoreAsync(score[0], audio.FirstOrDefault(), image.FirstOrDefault(), video.FirstOrDefault(), midi.FirstOrDefault());
                 return;
             }
-            if (!LoadScoreBundleFile(score[0])) return;
+            if (midi.Length == 0) { if (!LoadScoreBundleFile(score[0])) return; }
+            else
+            {
+                try
+                {
+                    string path = Path.GetFullPath(ProjectSettings.GlobalizePath(score[0]));
+                    var bundle = Trifle.Score.MuseScoreBundle.Read(path);
+                    ActivateScore(bundle, ReadScoreMidi(bundle, path), path, ReadMidiFile(midi[0]));
+                }
+                catch (Exception error) { SetStatus("载入 MIDI 与乐谱失败：" + error.Message); return; }
+            }
         }
         if (audio.Length > 0) LoadAudioFile(audio[0]);
         if (image.Length > 0) LoadBackgroundImage(image[0]);

@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://app/ScoreSyncPanel.cs" id="1"]
+
+[node name="ScoreSyncPanel" type="VBoxContainer"]
+script = ExtResource("1")
+theme_override_constants/separation = 8
+
+[node name="Header" type="Button" parent="."]
+layout_mode = 2
+text = "乐谱同步"
+toggle_mode = true
+button_pressed = false
+alignment = 0
+theme_type_variation = &"SubsectionHeader"
+custom_minimum_size = Vector2(0, 32)
+
+[node name="Fields" type="MarginContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_type_variation = &"SectionFields"
+
+[node name="Content" type="VBoxContainer" parent="Fields"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Source" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Fields/Content/Source"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MIDI 来源"
+
+[node name="Value" type="OptionButton" parent="Fields/Content/Source"]
+layout_mode = 2
+custom_minimum_size = Vector2(130, 32)
+fit_to_longest_item = false
+
+[node name="Offset" type="HBoxContainer" parent="Fields/Content"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Fields/Content/Offset"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "乐谱小节偏移"
+
+[node name="Value" type="SpinBox" parent="Fields/Content/Offset"]
+layout_mode = 2
+custom_minimum_size = Vector2(86, 32)
+min_value = -999.0
+max_value = 999.0
+step = 1.0
+alignment = 2
+select_all_on_focus = true
+
+[node name="Status" type="Label" parent="Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+theme_type_variation = &"HelpLabel"
+
+[node name="Help" type="Label" parent="Fields/Content"]
+layout_mode = 2
+autowrap_mode = 3
+text = "正值延后到 MIDI 后面的小节；负值跳过乐谱开头的小节。外部同步暂不支持反复，拍号与小节顺序需一致。"
+theme_type_variation = &"HelpLabel"

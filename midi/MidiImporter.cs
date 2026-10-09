@@ -60,6 +60,10 @@ public static class MidiImporter
             sortedNotes.Select(note => note.EndSeconds).DefaultIfEmpty(0).Max());
 
         return new MidiSong(sourcePath, (int)file.OriginalFormat,
-            tracks.ToArray(), tempoChanges.ToArray(), sortedNotes, duration);
+            tracks.ToArray(), tempoChanges.ToArray(), sortedNotes, duration)
+        {
+            BarGrid = file.TimeDivision is TicksPerQuarterNoteTimeDivision division
+                ? new MidiBarGrid(tempoMap, division) : null
+        };
     }
 }

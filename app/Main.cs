@@ -208,6 +208,14 @@ public partial class Main : Control
         try
         {
             var song = ReadMidiFile(path);
+            var score = _visualizer.Score;
+            if (score.Bundle != null)
+            {
+                var timeline = Trifle.Score.ScoreTimeline.ForExternalMidi(score.Bundle, song, _scoreSync);
+                ReplaceScoreMidi(song, false, timeline);
+                SetStatus("已载入外部 MIDI；保留乐谱并按小节网格同步。");
+                return;
+            }
             _projectPath = "";
             _projectMenu.SetProjectPath("");
             SetSong(song);
@@ -230,16 +238,22 @@ public partial class Main : Control
         return MidiImporter.Read(stream, path);
     }
 
-    private void SetSong(MidiSong song, bool midiFromScore = false, double scoreDuration = 0, bool preserveScore = false)
+    private void SetSong(MidiSong song, bool midiFromScore = false, double scoreDuration = 0,
+        bool preserveScore = false, bool preserveAudio = false)
     {
-        if (!preserveScore) ClearScoreState();
+        var audioSettings = _audio.Settings; var audioStream = _audio.Stream;
+        if (!preserveScore)
+        {
+            ClearScoreState();
+            _externalMidiPath = midiFromScore ? "" : song.SourcePath;
+        }
         _midiFromScore = midiFromScore;
         _sourceDuration = Math.Max(song.DurationSeconds, scoreDuration);
         _song = song;
         _quick.RefreshMidi(song.SourcePath, song.SourcePath.Length > 0, midiFromScore);
         GetNode<Control>("Margin/Content/Body/PreviewArea/EmptyState").Visible = _uiVisible && song.SourcePath.Length == 0;
         // A newly imported MIDI must not accidentally play the previous song's audio.
-        _audio.Configure(new AudioSettings(), null);
+        _audio.Configure(preserveAudio ? audioSettings : new AudioSettings(), preserveAudio ? audioStream : null);
         _playback.SetSong(song);
         _resumeAfterScrub = false;
         _visualizer.SetSong(song);
@@ -276,6 +290,7 @@ public partial class Main : Control
             case ProjectFileAction.SavePreset: SaveVisualPreset(path); break;
             case ProjectFileAction.RelinkMidi: RelinkProjectMidi(path); break;
             case ProjectFileAction.RelinkAudio: RelinkProjectAudio(path); break;
+            case ProjectFileAction.RelinkScore: RelinkProjectScore(path); break;
             case ProjectFileAction.WithoutAudio: LoadProjectWithoutAudio(); break;
         }
     }
@@ -284,6 +299,7 @@ public partial class Main : Control
     {
         MidiPath = ProjectSettings.GlobalizePath(_song.SourcePath),
         MidiFromScore = _midiFromScore, ScorePath = _scorePath,
+        ExternalMidiPath = _externalMidiPath.Length == 0 ? "" : ProjectSettings.GlobalizePath(_externalMidiPath), ScoreSync = _scoreSync,
         Visual = _visualizer.GetSettings(), Export = _exportDialog.GetPreferences(),
         Audio = _audio.Settings,
         TimeSeconds = _playback.TimeSeconds,
@@ -343,6 +359,13 @@ public partial class Main : Control
             SetStatus("项目等待重新选择音乐源文件；当前曲目保持原样。");
             return false;
         }
+        string scorePath = ProjectStorage.ResolveReference(_pendingProject.ScorePath, _pendingProjectPath);
+        if (scorePath.Length > 0 && !File.Exists(scorePath))
+        {
+            _projectMenu.RequestScoreReplacement("项目引用的乐谱文件不存在：\n" + scorePath);
+            SetStatus("项目等待重新选择乐谱；当前曲目保持原样。");
+            return false;
+        }
         string audio = ProjectStorage.ResolveReference(_pendingProject.Audio.Path, _pendingProjectPath);
         if (audio.Length > 0 && !File.Exists(audio))
         {
@@ -350,11 +373,12 @@ public partial class Main : Control
             SetStatus("项目等待重新选择音频；也可不使用音频加载。当前曲目保持原样。");
             return false;
         }
-        if (_pendingProject.MidiFromScore && Trifle.Score.MuseScoreImporter.IsScoreFile(midi) && importedScore == null &&
-            !_scoreImporter.TryReadCached(midi, out importedScore))
+        string bundlePath = _pendingProject.MidiFromScore ? midi : scorePath;
+        if (bundlePath.Length > 0 && Trifle.Score.MuseScoreImporter.IsScoreFile(bundlePath) && importedScore == null &&
+            !_scoreImporter.TryReadCached(bundlePath, out importedScore))
         {
             _projectMenu.ClearMissingRequest();
-            _ = ImportScoreAsync(midi, bundle => ContinueProjectLoad(bundle));
+            _ = ImportScoreAsync(bundlePath, bundle => ContinueProjectLoad(bundle));
             return false;
         }
         ApplyProject(_pendingProject, _pendingProjectPath, midi, audio, importedScore);
@@ -380,6 +404,7 @@ public partial class Main : Control
             _pendingProject = _pendingProject with
             {
                 MidiPath = Path.GetFullPath(midiPath),
+                ExternalMidiPath = _pendingProject.MidiFromScore ? _pendingProject.ExternalMidiPath : Path.GetFullPath(midiPath),
                 ScorePath = linkedScore ? Path.GetFullPath(midiPath) : _pendingProject.ScorePath
             };
             return ContinueProjectLoad();
@@ -389,6 +414,21 @@ public partial class Main : Control
             SetStatus("重新关联失败：" + error.Message);
             _projectMenu.RequestMidiReplacement(_status.Text, _pendingProject.MidiFromScore);
             return false;
+        }
+    }
+
+    public bool RelinkProjectScore(string scorePath)
+    {
+        if (_busy || _pendingProject == null) return false;
+        try
+        {
+            _pendingProject = _pendingProject with { ScorePath = Path.GetFullPath(scorePath) };
+            return ContinueProjectLoad();
+        }
+        catch (Exception error)
+        {
+            SetStatus("重新关联乐谱失败：" + error.Message);
+            _projectMenu.RequestScoreReplacement(_status.Text); return false;
         }
     }
 
@@ -425,23 +465,30 @@ public partial class Main : Control
     private void ApplyProject(ProjectData data, string projectPath, string midiPath, string audioPath, Trifle.Score.MuseScoreBundle importedScore = null)
     {
         // All file reads and data checks finish before changing the active scene.
-        var sourceBundle = data.MidiFromScore ? importedScore ?? Trifle.Score.MuseScoreBundle.Read(midiPath) : null;
-        var song = sourceBundle != null ? ReadScoreMidi(sourceBundle, midiPath) : ReadMidiFile(midiPath);
         string scorePath = ProjectStorage.ResolveReference(data.ScorePath, projectPath);
-        if (scorePath.Length > 0 && (sourceBundle == null || !string.Equals(scorePath, midiPath, StringComparison.OrdinalIgnoreCase)))
-            throw new ArgumentException("当前版本的乐谱需与 MIDI 来自同一个数据包，请重新选择乐谱。");
+        string bundlePath = data.MidiFromScore ? midiPath : scorePath;
+        var sourceBundle = bundlePath.Length > 0 ? importedScore ?? Trifle.Score.MuseScoreBundle.Read(bundlePath) : null;
+        var song = data.MidiFromScore ? ReadScoreMidi(sourceBundle, midiPath) : ReadMidiFile(midiPath);
+        if (data.MidiFromScore && scorePath.Length > 0 && !string.Equals(scorePath, midiPath, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("乐谱内 MIDI 的来源需与乐谱引用一致。");
+        var scoreTimeline = scorePath.Length == 0 ? null : data.MidiFromScore ? sourceBundle.Timeline
+            : Trifle.Score.ScoreTimeline.ForExternalMidi(sourceBundle, song, data.ScoreSync);
         data.Visual.Validate(song.Tracks.Length);
         var audioStream = AudioPlayback.ReadStream(audioPath);
-        double sourceDuration = Math.Max(song.DurationSeconds, sourceBundle?.DurationSeconds ?? 0);
+        double sourceDuration = Math.Max(song.DurationSeconds, scoreTimeline?.DurationSeconds ??
+            (data.MidiFromScore ? sourceBundle.DurationSeconds : 0));
         double duration = AudioTiming.PlaybackDuration(sourceDuration,
             data.Audio.Enabled && audioStream != null, data.Audio.OffsetSeconds, audioStream?.GetLength() ?? 0);
         data.Export.Validate(duration);
         if (data.TimeSeconds > duration) throw new ArgumentException("保存的播放位置超出播放时长。");
         var export = data.Export with { OutputPath = ProjectStorage.ResolveReference(data.Export.OutputPath, projectPath) };
         var visual = ProjectStorage.ResolveVisualReferences(data.Visual, projectPath);
-        if (scorePath.Length > 0) _visualizer.Score.SetBundle(sourceBundle, visual.Score);
+        if (scorePath.Length > 0) _visualizer.Score.SetBundle(sourceBundle, visual.Score, scoreTimeline);
         _scorePath = scorePath; _scoreError = "";
         SetSong(song, data.MidiFromScore, sourceDuration, preserveScore: scorePath.Length > 0);
+        _scoreSync = data.ScoreSync;
+        _externalMidiPath = !data.MidiFromScore ? midiPath :
+            ProjectStorage.ResolveReference(data.ExternalMidiPath, projectPath);
         _audio.Configure(data.Audio with { Path = audioPath }, audioStream);
         RefreshAudioSettings();
         _visualizer.ApplySettings(visual);
@@ -863,7 +910,7 @@ public partial class Main : Control
         if (input is not InputEventKey key || !key.Pressed || key.Echo) return;
         if (_infoDialog.Visible || _exportDialog.Visible || _fileDialog.Visible || _projectMenu.HasOpenDialog() ||
             _quick.HasOpenPopup() || _backgroundPanel.HasOpenPopup() || _notePanel.HasOpenPopup() || _contactLinePanel.HasOpenPopup() ||
-            _previewPanel.HasOpenPopup() || _scorePanel.HasOpenPopup() || (_scoreImportDialog?.Visible ?? false) || (_recoveryDialog?.Visible ?? false) ||
+            _previewPanel.HasOpenPopup() || _scorePanel.HasOpenPopup() || _scoreSyncPanel.HasOpenPopup() || (_scoreImportDialog?.Visible ?? false) || (_recoveryDialog?.Visible ?? false) ||
             _settings.HasOpenPopup()) return;
         Control focus = GetViewport().GuiGetFocusOwner();
         if (focus is LineEdit or TextEdit && key.Keycode != Key.F10) return;
@@ -1013,6 +1060,7 @@ public partial class Main : Control
         _particlePanel.SetBusy(busy);
         _previewPanel.SetBusy(busy);
         _scorePanel.SetBusy(busy);
+        _scoreSyncPanel.SetBusy(busy);
         foreach (string path in new[] { "Header/Export", "Transport/Play", "Transport/Stop",
             "Transport/Start", "Transport/FirstNote" })
             GetNode<Button>("Margin/Content/" + path).Disabled = busy;

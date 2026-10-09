@@ -136,10 +136,13 @@ public partial class Main
 
     public void CancelScoreImport() => _scoreImportCancellation?.Cancel();
 
-    private async Task ImportDroppedScoreAsync(string path, string audio, string image, string video)
+    private async Task ImportDroppedScoreAsync(string path, string audio, string image, string video, string midi = null)
     {
         path = Path.GetFullPath(ProjectSettings.GlobalizePath(path));
-        if (!await ImportScoreAsync(path, bundle => ActivateScore(bundle, ReadScoreMidi(bundle, path), path))) return;
+        Trifle.Midi.MidiSong externalSong = null;
+        try { if (midi != null) externalSong = ReadMidiFile(midi); }
+        catch (Exception error) { SetStatus("载入外部 MIDI 失败：" + error.Message); return; }
+        if (!await ImportScoreAsync(path, bundle => ActivateScore(bundle, ReadScoreMidi(bundle, path), path, externalSong))) return;
         if (audio != null) LoadAudioFile(audio);
         if (image != null) LoadBackgroundImage(image);
         if (video != null) LoadBackgroundVideo(video);

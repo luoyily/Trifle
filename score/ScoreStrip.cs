@@ -11,6 +11,7 @@ namespace Trifle.Score;
 public partial class ScoreStrip : Node2D
 {
     public MuseScoreBundle Bundle { get; private set; }
+    public ScoreTimeline Timeline { get; private set; }
     public ScoreCursor Cursor { get; private set; }
     public int RasterCount { get; private set; }
     public int CachedRows => _cache.Count;
@@ -32,6 +33,7 @@ public partial class ScoreStrip : Node2D
     private int _generation, _pendingGeneration, _pendingRow;
     private int _textureRow = -1;
     private bool _exiting;
+    private double _time;
     private ImageTexture _texture;
     private Sprite2D _notation;
     private Line2D _cursorLine;
@@ -61,18 +63,19 @@ public partial class ScoreStrip : Node2D
         StartPreload();
     }
 
-    public void SetBundle(MuseScoreBundle bundle, ScoreSettings settings = null)
+    public void SetBundle(MuseScoreBundle bundle, ScoreSettings settings = null, ScoreTimeline timeline = null)
     {
         if (bundle == null) throw new ArgumentNullException(nameof(bundle));
         settings ??= Settings;
         settings.Validate();
-        var cursor = bundle.CursorAt(0);
+        timeline ??= bundle.Timeline;
+        var cursor = timeline.CursorAt(0);
         // Render before replacing the usable bundle, so a failed import leaves it intact.
         var texture = Rasterize(bundle, cursor.Row, settings, RenderWidth);
         ClearCache();
-        Bundle = bundle; Cursor = cursor; Settings = settings; Visible = settings.Enabled;
+        Bundle = bundle; Timeline = timeline; _time = 0; Cursor = cursor; Settings = settings; Visible = settings.Enabled;
         CacheTexture(cursor.Row, texture); _texture = texture; _textureRow = cursor.Row;
-        CursorGain = ScorePulse.Gain(-bundle.Events[cursor.Event].Seconds);
+        CursorGain = ScorePulse.Gain(-timeline.Events[cursor.Event].Seconds);
         RefreshDrawing();
         StartPreload();
     }
@@ -115,7 +118,7 @@ public partial class ScoreStrip : Node2D
 
     public void ClearBundle()
     {
-        ClearCache(); Bundle = null; Cursor = null; CursorGain = 1;
+        ClearCache(); Bundle = null; Timeline = null; Cursor = null; CursorGain = 1;
         RefreshDrawing();
     }
 
@@ -123,12 +126,21 @@ public partial class ScoreStrip : Node2D
     {
         if (Bundle == null) return;
         CollectPreload();
-        var cursor = Bundle.CursorAt(seconds);
+        _time = seconds;
+        var cursor = Timeline.CursorAt(seconds);
         if (Settings.Enabled && _textureRow != cursor.Row) SelectTexture(cursor.Row, Settings, RenderWidth);
         Cursor = cursor;
-        CursorGain = ScorePulse.Gain(seconds - Bundle.Events[cursor.Event].Seconds);
+        CursorGain = ScorePulse.Gain(seconds - Timeline.Events[cursor.Event].Seconds);
         RefreshDrawing();
         StartPreload();
+    }
+
+    public void SetTimeline(ScoreTimeline timeline)
+    {
+        if (Bundle == null) return;
+        Timeline = timeline ?? Bundle.Timeline;
+        CancelPreload();
+        SetTime(_time);
     }
 
     private void SelectTexture(int row, ScoreSettings settings, int renderWidth)
@@ -169,8 +181,8 @@ public partial class ScoreStrip : Node2D
     private IEnumerable<int> UpcomingRows()
     {
         var seen = new HashSet<int> { Cursor.Row };
-        for (int i = Cursor.Event + 1; i < Bundle.Events.Length && seen.Count < 3; i++)
-            if (seen.Add(Bundle.Events[i].Row)) yield return Bundle.Events[i].Row;
+        for (int i = Cursor.Event + 1; i < Timeline.Events.Length && seen.Count < 3; i++)
+            if (seen.Add(Timeline.Events[i].Row)) yield return Timeline.Events[i].Row;
     }
 
     private void StartPreload()
