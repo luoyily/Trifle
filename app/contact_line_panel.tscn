@@ -294,3 +294,7 @@ text = "恢复参数"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复接触线与光带响应参数"
+
+[editable path="Fields/Content/Halo"]
+[editable path="Fields/Content/Line"]
+[editable path="Fields/Content/LineMotion"]

@@ -607,3 +607,7 @@ theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复共享气流与运动参数"
 
+
+[editable path="Fields/Content/Curves"]
+[editable path="Fields/Content/Motion"]
+[editable path="Fields/Content/Particles"]

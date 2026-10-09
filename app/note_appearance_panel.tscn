@@ -162,3 +162,6 @@ theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复音符发光参数"
 
+
+[editable path="Emission"]
+[editable path="Style"]

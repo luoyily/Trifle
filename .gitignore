@@ -11,6 +11,7 @@
 
 # Exported application builds
 /dist/
+/build/
 
 # Local environment and operating-system files
 .env

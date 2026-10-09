@@ -186,3 +186,5 @@ layout_mode = 2
 autowrap_mode = 3
 text = "视频跟随 MIDI 时间；预览默认 720p / 30 FPS。FFmpeg 路径在导出窗口中设置；背景视频自身音轨不参与播放与导出。"
 theme_type_variation = &"HelpLabel"
+
+[editable path="Fields/Content/Video"]

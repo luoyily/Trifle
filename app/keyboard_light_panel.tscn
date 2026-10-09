@@ -304,3 +304,8 @@ text = "恢复参数"
 theme_type_variation = &"QuietButton"
 size_flags_horizontal = 0
 tooltip_text = "恢复近键音符增亮参数"
+
+[editable path="Fields/Content/Area"]
+[editable path="Fields/Content/Hit"]
+[editable path="Fields/Content/Keyboard"]
+[editable path="Fields/Content/Near"]
