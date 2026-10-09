@@ -1,5 +1,7 @@
 <div align="center">
 
+  简体中文 | [English](README.en.md)
+
   <img src="readme_assets/icon.png" width="128" alt="Trifle 图标">
 
   # Trifle
