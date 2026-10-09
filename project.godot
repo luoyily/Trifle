@@ -33,6 +33,11 @@ project/assembly_name="Trifle"
 
 theme/custom="res://app/theme/trifle_theme.tres"
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://app/locale/translations.en.translation")
+locale/fallback="zh"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

@@ -129,6 +129,12 @@ tooltip_text = "Ctrl+H 显示 / 隐藏界面，Esc 恢复界面，F10 窗口调�
 theme_type_variation = &"MenuText"
 size_flags_vertical = 4
 
+[node name="Language" type="OptionButton" parent="Margin/Content/Header"]
+layout_mode = 2
+tooltip_text = "Language / 语言"
+theme_type_variation = &"MenuText"
+size_flags_vertical = 4
+
 [node name="EndSpace" type="Control" parent="Margin/Content/Header"]
 layout_mode = 2
 custom_minimum_size = Vector2(10, 0)

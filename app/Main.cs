@@ -66,6 +66,7 @@ public partial class Main : Control
 
     public override void _Ready()
     {
+        AppLocale.ApplySaved();
         GetTree().Root.GuiEmbedSubwindows = true;
         GetTree().AutoAcceptQuit = false;
         GetWindow().MinSize = EditorWindowMinimum;
@@ -91,6 +92,7 @@ public partial class Main : Control
         _title = GetNode<Label>(ui + "Header/Title");
         _status = GetNode<Label>(ui + "Status");
         _projectMenu = GetNode<ProjectMenu>(ui + "Header/ProjectMenu");
+        AppLocale.Attach(GetNode<OptionButton>(ui + "Header/Language"));
         _projectMenu.FileRequested += HandleProjectFile;
         _projectMenu.RelinkCancelled += () => _pendingProject = null;
         _projectMenu.AboutRequested += () => _aboutDialog.PopupCentered();
