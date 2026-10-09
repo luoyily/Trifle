@@ -17,7 +17,11 @@ public sealed record ScoreRow(int Page, double Top, double Height, double Left, 
 public sealed record ScoreEvent(double Seconds, int ElementId, int Row, double X);
 public sealed record ScoreCursor(int Event, int Row, double X);
 
-// MuseScore --score-media with default export resolution (positions / 12 = SVG units).
+// MuseScore --score-media authors element positions on a raster at 12x the PNG export
+// resolution (positionswriter.cpp scales the configured PNG DPI by 12), while the SVG
+// viewBox follows the PDF export DPI. The two resolutions are independent preferences, so
+// the real scale is measured from the packaged PNG width at load time; this constant is
+// only the fallback for bundles without usable PNGs.
 public sealed class MuseScoreBundle
 {
     public const double CoordinateScale = 12;
@@ -59,8 +63,9 @@ public sealed class MuseScoreBundle
             return new ScorePage(text, box[2], box[3]);
         }).ToArray();
 
-        var measures = Elements(Decode(mpos), pages.Length);
-        var segments = Elements(Decode(spos), pages.Length);
+        var positionScale = PositionScale(pages[0], data);
+        var measures = Elements(Decode(mpos), pages.Length, positionScale);
+        var segments = Elements(Decode(spos), pages.Length, positionScale);
         var rows = measures.Values.GroupBy(e => (e.Page, Y: Math.Round(e.Y))).OrderBy(g => g.Key.Page).ThenBy(g => g.Key.Y)
             .Select(g => new ScoreRow(g.Key.Page, g.Min(e => e.Y), g.Max(e => e.Height), g.Min(e => e.X),
                 g.Max(e => e.X + e.Width), g.Min(e => e.Id) + 1, g.Max(e => e.Id) + 1, 0, 0)).ToArray();
@@ -180,7 +185,7 @@ public sealed class MuseScoreBundle
             .OrderBy(i => Math.Abs(rows[i].Top - middle)).FirstOrDefault(-1);
         return row < 0 ? null : new Tempo(row, top);
     }
-    private static Dictionary<int, Element> Elements(string xml, int pageCount)
+    private static Dictionary<int, Element> Elements(string xml, int pageCount, double coordinateScale)
     {
         var root = Xml(xml).Root;
         var nodes = root?.Elements().FirstOrDefault(e => e.Name.LocalName == "elements")?.Elements()
@@ -189,14 +194,37 @@ public sealed class MuseScoreBundle
         foreach (var node in nodes)
         {
             int id = Integer(node, "id"), page = Integer(node, "page");
-            double width = Attribute(node, "sx") / CoordinateScale, height = Attribute(node, "sy") / CoordinateScale;
+            double width = Attribute(node, "sx") / coordinateScale, height = Attribute(node, "sy") / coordinateScale;
             if (page < 0 || page >= pageCount || width < 0 || height <= 0 || id < 0)
                 throw new InvalidDataException("乐谱位置表包含无效尺寸、页码或编号。");
-            if (!result.TryAdd(id, new Element(id, page, Attribute(node, "x") / CoordinateScale,
-                Attribute(node, "y") / CoordinateScale, width, height)))
+            if (!result.TryAdd(id, new Element(id, page, Attribute(node, "x") / coordinateScale,
+                Attribute(node, "y") / coordinateScale, width, height)))
                 throw new InvalidDataException("乐谱位置表包含重复编号。");
         }
         return result;
+    }
+
+    // Positions are 12x the packaged PNG raster; its pixel width (IHDR header, big-endian)
+    // anchors that space onto the SVG viewBox regardless of export preferences.
+    private static double PositionScale(ScorePage page, JsonElement data)
+    {
+        try
+        {
+            if (!data.TryGetProperty("pngs", out var pngs) || pngs.ValueKind != JsonValueKind.Array
+                || pngs.GetArrayLength() == 0 || pngs[0].ValueKind != JsonValueKind.String) return CoordinateScale;
+            byte[] png = Convert.FromBase64String(pngs[0].GetString()
+                ?? throw new InvalidDataException("乐谱数据字段不能为空。"));
+            bool isPng = png.Length >= 24 && png[0] == 0x89 && png[1] == 0x50 && png[2] == 0x4E && png[3] == 0x47;
+            if (!isPng || page.Width <= 0) return CoordinateScale;
+            long pngWidth = ((long)png[16] << 24) | png[17] << 16 | png[18] << 8 | png[19];
+            if (pngWidth <= 0) return CoordinateScale;
+            double scale = CoordinateScale * pngWidth / page.Width;
+            return double.IsFinite(scale) && scale is > 0 and <= 120 ? scale : CoordinateScale;
+        }
+        catch (Exception error) when (error is FormatException or InvalidDataException)
+        {
+            return CoordinateScale;
+        }
     }
 
     private static XDocument Xml(string text)
