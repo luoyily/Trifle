@@ -197,8 +197,7 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.exe ; FFmpeg 可执行文件")
 title = "选择 FFmpeg 可执行文件"
-size = Vector2i(720, 480)
-min_size = Vector2i(560, 420)
+use_native_dialog = true
 
 [node name="Overwrite" type="ConfirmationDialog" parent="."]
 title = "确认覆盖"
