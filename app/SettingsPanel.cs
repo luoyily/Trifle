@@ -64,6 +64,7 @@ public partial class SettingsPanel : PanelContainer
             int selected = _colorMode.Selected;
             PopulateColorModeItems();
             _colorMode.Select(selected);
+            RebuildColorTargets();
         };
         _lookAhead.ValueChanged += value => { if (!_syncing && !_busy) LookAheadChanged?.Invoke(value); };
         _colorMode.ItemSelected += index => { if (!_busy) ColorModeChanged?.Invoke((int)index); };
