@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Trifle.Export;
 using Trifle.Midi;
 using Trifle.Audio;
@@ -21,6 +22,10 @@ public partial class ExportDialog : Window
     }
     private LineEdit _path;
     private LineEdit _ffmpeg;
+    private Button _ffmpegBrowse;
+    private RichTextLabel _ffmpegHint;
+    private FileDialog _ffmpegDialog;
+    private int _ffmpegDetection;
     private SpinBox _start;
     private SpinBox _end;
     private Button _begin;
@@ -78,10 +83,19 @@ public partial class ExportDialog : Window
         foreach (string preset in Presets) _preset.AddItem(preset);
         foreach (int bitrate in AudioBitrates) _audioQuality.AddItem($"AAC · {bitrate} kbps");
         ApplyEncoding(new EncodingSettings());
-        string bundled = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
-        if (File.Exists(bundled)) _ffmpeg.Text = bundled;
-        _ffmpeg.TextSubmitted += _ => FfmpegPathChanged?.Invoke();
-        _ffmpeg.FocusExited += () => FfmpegPathChanged?.Invoke();
+        _ffmpegBrowse = GetNode<Button>(ui + "Ffmpeg/Browse");
+        _ffmpegHint = GetNode<RichTextLabel>(ui + "FfmpegHint");
+        _ffmpegDialog = GetNode<FileDialog>("FfmpegDialog");
+        _ffmpegHint.MetaClicked += meta => OS.ShellOpen(meta.AsString());
+        _ffmpeg.TextSubmitted += _ => FfmpegEdited();
+        _ffmpeg.FocusExited += FfmpegEdited;
+        _ffmpegBrowse.Pressed += () =>
+        {
+            string text = _ffmpeg.Text.Trim();
+            if (File.Exists(text)) _ffmpegDialog.CurrentDir = Path.GetDirectoryName(text);
+            _ffmpegDialog.PopupCenteredRatio(0.7f);
+        };
+        _ffmpegDialog.FileSelected += path => { _ffmpeg.Text = path; FfmpegEdited(); };
         _browse.Pressed += () =>
         {
             string parent = Path.GetDirectoryName(_path.Text);
@@ -167,6 +181,33 @@ public partial class ExportDialog : Window
         _message.TooltipText = _audio.Path + (_assetDetails.Length > 0 ? "\n" + _assetDetails : "");
         _progress.Value = 0;
         PopupCentered();
+        if (!_busy) _ = RunDetectionAsync(fill: true);
+    }
+
+    // Re-checks the current text after every edit; on failure the download hint shows and on
+    // success the tooltip reports the resolved location and version.
+    private void FfmpegEdited()
+    {
+        FfmpegPathChanged?.Invoke();
+        if (!_busy) _ = RunDetectionAsync(fill: false);
+    }
+
+    private async Task RunDetectionAsync(bool fill)
+    {
+        int generation = ++_ffmpegDetection;
+        string requested = _ffmpeg.Text.Trim();
+        var probe = await FfmpegLocator.DetectAsync(requested);
+        if (generation != _ffmpegDetection || !IsInsideTree()) return;
+        // Filling only happens for a probe of the untouched text, so typing is never clobbered.
+        if (probe.Found && fill && !string.Equals(probe.Path, requested, StringComparison.OrdinalIgnoreCase))
+        {
+            _ffmpeg.Text = probe.Path;
+            FfmpegPathChanged?.Invoke();
+        }
+        _ffmpeg.TooltipText = probe.Found
+            ? "已找到：" + probe.Resolved + (probe.Version.Length > 0 ? "\n" + probe.Version : "")
+            : "未找到可用的 FFmpeg，请见下方提示。";
+        _ffmpegHint.Visible = !probe.Found;
     }
 
     public void SetAudio(AudioSettings settings)
@@ -184,7 +225,7 @@ public partial class ExportDialog : Window
 
     public override void _Input(InputEvent input)
     {
-        if (Visible && !_save.Visible && !_overwrite.Visible &&
+        if (Visible && !_save.Visible && !_overwrite.Visible && !_ffmpegDialog.Visible &&
             input is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Escape })
         {
             TryClose();
@@ -252,7 +293,7 @@ public partial class ExportDialog : Window
     {
         _busy = busy;
         _path.Editable = _ffmpeg.Editable = _start.Editable = _end.Editable = !busy;
-        _begin.Disabled = _browse.Disabled = busy;
+        _begin.Disabled = _browse.Disabled = _ffmpegBrowse.Disabled = busy;
         _size.Disabled = _fps.Disabled = busy;
         _encoder.Disabled = _preset.Disabled = busy;
         _crf.Editable = !busy;

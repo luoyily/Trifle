@@ -146,6 +146,19 @@ size_flags_horizontal = 3
 text = "ffmpeg"
 tooltip_text = "可执行文件名或完整路径"
 
+[node name="Browse" type="Button" parent="Margin/Content/Ffmpeg"]
+layout_mode = 2
+text = "选择…"
+
+[node name="FfmpegHint" type="RichTextLabel" parent="Margin/Content"]
+layout_mode = 2
+visible = false
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 3
+text = "未找到可用的 FFmpeg，无法导出视频。请从官网下载安装：[url=https://ffmpeg.org/download.html#build-windows]ffmpeg.org/download.html#build-windows[/url]，安装后重新打开本窗口即可自动识别，或在上方填写 ffmpeg.exe 的完整路径。"
+
 [node name="Progress" type="ProgressBar" parent="Margin/Content"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 24)
@@ -178,6 +191,14 @@ file_mode = 4
 access = 2
 filters = PackedStringArray("*.mp4 ; MP4 视频")
 use_native_dialog = true
+
+[node name="FfmpegDialog" type="FileDialog" parent="."]
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.exe ; FFmpeg 可执行文件")
+title = "选择 FFmpeg 可执行文件"
+size = Vector2i(720, 480)
+min_size = Vector2i(560, 420)
 
 [node name="Overwrite" type="ConfirmationDialog" parent="."]
 title = "确认覆盖"
