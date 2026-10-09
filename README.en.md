@@ -41,3 +41,7 @@
 ## Third-party notices
 
 Licenses for the bundled third-party components (Godot Engine, DryWetMIDI, .NET Runtime) can be found in [licenses/THIRD-PARTY-LICENSES.txt](licenses/THIRD-PARTY-LICENSES.txt).
+
+## License
+
+Released under the [GNU AGPL-3.0](LICENSE).

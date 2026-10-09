@@ -43,3 +43,7 @@
 ## 第三方声明
 
 随包分发的第三方组件（Godot Engine、DryWetMIDI、.NET Runtime）许可见 [licenses/THIRD-PARTY-LICENSES.txt](licenses/THIRD-PARTY-LICENSES.txt)。
+
+## 许可证
+
+本项目以 [GNU AGPL-3.0](LICENSE) 协议开源。
