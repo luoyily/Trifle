@@ -4,8 +4,8 @@
 
 [node name="AboutDialog" type="Window"]
 title = "关于 Trifle"
-size = Vector2i(640, 560)
-min_size = Vector2i(520, 440)
+size = Vector2i(560, 360)
+min_size = Vector2i(480, 320)
 visible = false
 exclusive = true
 script = ExtResource("1")
@@ -65,20 +65,3 @@ layout_mode = 2
 autowrap_mode = 3
 theme_type_variation = &"HelpLabel"
 text = "视频导出依赖外部 FFmpeg（未随应用分发）。"
-
-[node name="ShowLicenses" type="Button" parent="Margin/Content"]
-layout_mode = 2
-toggle_mode = true
-text = "查看完整许可证"
-
-[node name="LicensesScroll" type="ScrollContainer" parent="Margin/Content"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="LicensesText" type="RichTextLabel" parent="Margin/Content/LicensesScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[connection signal="toggled" from="Margin/Content/ShowLicenses" to="." method="ToggleLicenses"]
