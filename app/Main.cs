@@ -34,6 +34,7 @@ public partial class Main : Control
     private MidiNote _lastHit;
     private SongInfoDialog _infoDialog;
     private ExportDialog _exportDialog;
+    private AboutDialog _aboutDialog;
     private SubViewport _viewport;
     private SubViewport _hdrViewport;
     private TextureRect _present;
@@ -92,6 +93,7 @@ public partial class Main : Control
         _projectMenu = GetNode<ProjectMenu>(ui + "Header/ProjectMenu");
         _projectMenu.FileRequested += HandleProjectFile;
         _projectMenu.RelinkCancelled += () => _pendingProject = null;
+        _projectMenu.AboutRequested += () => _aboutDialog.PopupCentered();
         _play = GetNode<Button>(ui + "Transport/Play");
         _playIcon = GetThemeIcon("play", "Trifle");
         _pauseIcon = GetThemeIcon("pause", "Trifle");
@@ -162,6 +164,7 @@ public partial class Main : Control
         GetWindow().FilesDropped += HandleFilesDropped;
         _infoDialog = GetNode<SongInfoDialog>("SongInfoDialog");
         _exportDialog = GetNode<ExportDialog>("ExportDialog");
+        _aboutDialog = GetNode<AboutDialog>("AboutDialog");
         _exportDialog.FfmpegPathChanged += RefreshBackgroundSettings;
         GetNode<Button>(ui + "Header/Info").Pressed += () => _infoDialog.PopupCentered();
         GetNode<Button>(ui + "Header/Export").Pressed += () =>

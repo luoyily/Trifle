@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bau4p41a8arlt"]
+[gd_scene load_steps=13 format=3 uid="uid://bau4p41a8arlt"]
 
 [ext_resource type="Script" uid="uid://dvtf2sqeokymw" path="res://app/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://visualizer/visualizer.tscn" id="2_visualizer"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://app/export_dialog.tscn" id="4_export"]
 [ext_resource type="PackedScene" path="res://app/settings_panel.tscn" id="5_settings"]
 [ext_resource type="PackedScene" path="res://app/project_menu.tscn" id="6_project"]
+[ext_resource type="PackedScene" path="res://app/about_dialog.tscn" id="7_about"]
 [ext_resource type="Script" path="res://audio/AudioPlayback.cs" id="7_audio"]
 [ext_resource type="Shader" path="res://visualizer/linear_to_srgb.gdshader" id="8_output"]
 [ext_resource type="Script" path="res://video/VideoBackground.cs" id="9_video"]
@@ -267,4 +268,6 @@ use_native_dialog = true
 [node name="SongInfoDialog" parent="." instance=ExtResource("3_info")]
 
 [node name="ExportDialog" parent="." instance=ExtResource("4_export")]
+
+[node name="AboutDialog" parent="." instance=ExtResource("7_about")]
 

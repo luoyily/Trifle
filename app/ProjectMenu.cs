@@ -4,12 +4,13 @@ using System.IO;
 
 namespace Trifle.App;
 
-public enum ProjectFileAction { OpenProject, SaveProject, SaveProjectAs, OpenPreset, SavePreset, RelinkMidi, RelinkAudio, WithoutAudio, RelinkScore }
+public enum ProjectFileAction { OpenProject, SaveProject, SaveProjectAs, OpenPreset, SavePreset, RelinkMidi, RelinkAudio, WithoutAudio, RelinkScore, About }
 
 public partial class ProjectMenu : MenuButton
 {
     public event Action<ProjectFileAction, string> FileRequested;
     public event Action RelinkCancelled;
+    public event Action AboutRequested;
     private FileDialog _files;
     private ConfirmationDialog _missing;
     private ProjectFileAction _action;
@@ -28,9 +29,12 @@ public partial class ProjectMenu : MenuButton
         popup.AddSeparator();
         popup.AddItem("加载视觉预设…", (int)ProjectFileAction.OpenPreset);
         popup.AddItem("保存视觉预设…", (int)ProjectFileAction.SavePreset);
+        popup.AddSeparator();
+        popup.AddItem("关于 Trifle…", (int)ProjectFileAction.About);
         popup.IdPressed += id =>
         {
             var action = (ProjectFileAction)id;
+            if (action == ProjectFileAction.About) { AboutRequested?.Invoke(); return; }
             if (action == ProjectFileAction.SaveProject && _projectPath.Length > 0)
                 FileRequested?.Invoke(action, _projectPath);
             else ChooseFile(action);
