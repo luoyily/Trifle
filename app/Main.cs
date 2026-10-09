@@ -66,7 +66,7 @@ public partial class Main : Control
 
     public override void _Ready()
     {
-        AppLocale.ApplySaved();
+        AppLocale.LanguageChanged += () => { if (_exportDialog != null && _quick != null) RefreshExportContents(); };
         GetTree().Root.GuiEmbedSubwindows = true;
         GetTree().AutoAcceptQuit = false;
         GetWindow().MinSize = EditorWindowMinimum;
@@ -158,6 +158,7 @@ public partial class Main : Control
         // This event is the future effects hook. Seeking only rebuilds state and clears diagnostics.
         _playback.NoteHit += note => { _hitsSinceSeek++; _lastHit = note; };
         _fileDialog = GetNode<FileDialog>("MidiDialog");
+        AppLocale.BindTitle(_fileDialog, "导入 MIDI");
         _fileDialog.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
         _fileDialog.FileSelected += LoadMidiFile;
         _quick.MidiRequested += OpenMidiDialog;
@@ -230,7 +231,7 @@ public partial class Main : Control
         }
         catch (Exception exception)
         {
-            SetStatus("导入失败：" + exception.Message);
+            SetStatus(string.Format(AppLocale.T("导入失败：{0}"), exception.Message));
             GD.PushWarning("[M4] " + exception.Message);
         }
     }
@@ -238,7 +239,7 @@ public partial class Main : Control
     private static MidiSong ReadMidiFile(string path)
     {
         using var file = GodotFileAccess.Open(path, GodotFileAccess.ModeFlags.Read);
-        if (file == null) throw new IOException($"无法读取 MIDI：{GodotFileAccess.GetOpenError()}");
+        if (file == null) throw new IOException(string.Format(AppLocale.T("无法读取 MIDI：{0}"), GodotFileAccess.GetOpenError()));
         using var stream = new MemoryStream(file.GetBuffer(checked((long)file.GetLength())));
         return MidiImporter.Read(stream, path);
     }
@@ -322,15 +323,15 @@ public partial class Main : Control
             var data = CaptureProject();
             data.Export.Validate(_playback.DurationSeconds);
             if (data.Export.OutputPath.Length > 0 && !Path.IsPathFullyQualified(data.Export.OutputPath))
-                throw new ArgumentException("视频输出需要使用绝对路径。");
+                throw new ArgumentException(AppLocale.T("视频输出需要使用绝对路径。"));
             ProjectStorage.SaveProject(path, data);
             _projectPath = Path.GetFullPath(path);
             _projectMenu.SetProjectPath(_projectPath);
             UpdateTitle();
-            SetStatus("已保存 · " + Path.GetFileName(path), path);
+            SetStatus(string.Format(AppLocale.T("已保存 · {0}"), Path.GetFileName(path)), path);
             return true;
         }
-        catch (Exception error) { SetStatus("保存项目失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("保存项目失败：{0}"), error.Message)); return false; }
     }
 
     public bool LoadProjectFile(string path)
@@ -349,7 +350,7 @@ public partial class Main : Control
         catch (Exception error)
         {
             _pendingProject = null;
-            SetStatus("加载项目失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("加载项目失败：{0}"), error.Message));
             return false;
         }
     }
@@ -359,7 +360,7 @@ public partial class Main : Control
         string midi = ProjectStorage.ResolveReference(_pendingProject.MidiPath, _pendingProjectPath);
         if (!File.Exists(midi))
         {
-            _projectMenu.RequestMidiReplacement((_pendingProject.MidiFromScore ? "项目引用的乐谱文件不存在：\n" : "项目引用的 MIDI 文件不存在：\n") + midi,
+            _projectMenu.RequestMidiReplacement(string.Format(AppLocale.T(_pendingProject.MidiFromScore ? "项目引用的乐谱文件不存在：\n{0}" : "项目引用的 MIDI 文件不存在：\n{0}"), midi),
                 _pendingProject.MidiFromScore);
             SetStatus("项目等待重新选择音乐源文件；当前曲目保持原样。");
             return false;
@@ -367,14 +368,14 @@ public partial class Main : Control
         string scorePath = ProjectStorage.ResolveReference(_pendingProject.ScorePath, _pendingProjectPath);
         if (scorePath.Length > 0 && !File.Exists(scorePath))
         {
-            _projectMenu.RequestScoreReplacement("项目引用的乐谱文件不存在：\n" + scorePath);
+            _projectMenu.RequestScoreReplacement(string.Format(AppLocale.T("项目引用的乐谱文件不存在：\n{0}"), scorePath));
             SetStatus("项目等待重新选择乐谱；当前曲目保持原样。");
             return false;
         }
         string audio = ProjectStorage.ResolveReference(_pendingProject.Audio.Path, _pendingProjectPath);
         if (audio.Length > 0 && !File.Exists(audio))
         {
-            _projectMenu.RequestAudioReplacement("项目引用的音频文件不存在：\n" + audio);
+            _projectMenu.RequestAudioReplacement(string.Format(AppLocale.T("项目引用的音频文件不存在：\n{0}"), audio));
             SetStatus("项目等待重新选择音频；也可不使用音频加载。当前曲目保持原样。");
             return false;
         }
@@ -416,7 +417,7 @@ public partial class Main : Control
         }
         catch (Exception error)
         {
-            SetStatus("重新关联失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("重新关联失败：{0}"), error.Message));
             _projectMenu.RequestMidiReplacement(_status.Text, _pendingProject.MidiFromScore);
             return false;
         }
@@ -432,7 +433,7 @@ public partial class Main : Control
         }
         catch (Exception error)
         {
-            SetStatus("重新关联乐谱失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("重新关联乐谱失败：{0}"), error.Message));
             _projectMenu.RequestScoreReplacement(_status.Text); return false;
         }
     }
@@ -447,7 +448,7 @@ public partial class Main : Control
         }
         catch (Exception error)
         {
-            SetStatus("重新关联失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("重新关联失败：{0}"), error.Message));
             _projectMenu.RequestAudioReplacement(_status.Text);
             return false;
         }
@@ -462,7 +463,7 @@ public partial class Main : Control
         {
             _pendingProject = null;
             _projectMenu.ClearMissingRequest();
-            SetStatus("加载项目失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("加载项目失败：{0}"), error.Message));
             return false;
         }
     }
@@ -475,7 +476,7 @@ public partial class Main : Control
         var sourceBundle = bundlePath.Length > 0 ? importedScore ?? Trifle.Score.MuseScoreBundle.Read(bundlePath) : null;
         var song = data.MidiFromScore ? ReadScoreMidi(sourceBundle, midiPath) : ReadMidiFile(midiPath);
         if (data.MidiFromScore && scorePath.Length > 0 && !string.Equals(scorePath, midiPath, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("乐谱内 MIDI 的来源需与乐谱引用一致。");
+            throw new ArgumentException(AppLocale.T("乐谱内 MIDI 的来源需与乐谱引用一致。"));
         var scoreTimeline = scorePath.Length == 0 ? null : data.MidiFromScore ? sourceBundle.Timeline
             : Trifle.Score.ScoreTimeline.ForExternalMidi(sourceBundle, song, data.ScoreSync);
         data.Visual.Validate(song.Tracks.Length);
@@ -485,7 +486,7 @@ public partial class Main : Control
         double duration = AudioTiming.PlaybackDuration(sourceDuration,
             data.Audio.Enabled && audioStream != null, data.Audio.OffsetSeconds, audioStream?.GetLength() ?? 0);
         data.Export.Validate(duration);
-        if (data.TimeSeconds > duration) throw new ArgumentException("保存的播放位置超出播放时长。");
+        if (data.TimeSeconds > duration) throw new ArgumentException(AppLocale.T("保存的播放位置超出播放时长。"));
         var export = data.Export with { OutputPath = ProjectStorage.ResolveReference(data.Export.OutputPath, projectPath) };
         var visual = ProjectStorage.ResolveVisualReferences(data.Visual, projectPath);
         if (scorePath.Length > 0) _visualizer.Score.SetBundle(sourceBundle, visual.Score, scoreTimeline);
@@ -513,7 +514,7 @@ public partial class Main : Control
         _projectMenu.ClearMissingRequest();
         _projectMenu.SetProjectPath(_projectPath);
         UpdateTitle();
-        SetStatus("已加载（暂停）· " + Path.GetFileName(projectPath) + BackgroundNotice(), projectPath + BackgroundNotice());
+        SetStatus(string.Format(AppLocale.T("已加载（暂停）· {0}"), Path.GetFileName(projectPath) + BackgroundNotice()), projectPath + BackgroundNotice());
     }
 
     public bool SaveVisualPreset(string path)
@@ -522,10 +523,10 @@ public partial class Main : Control
         try
         {
             ProjectStorage.SavePreset(path, new VisualPreset { Visual = _visualizer.GetSettings() });
-            SetStatus("已保存视觉预设 · " + Path.GetFileName(path), path);
+            SetStatus(string.Format(AppLocale.T("已保存视觉预设 · {0}"), Path.GetFileName(path)), path);
             return true;
         }
-        catch (Exception error) { SetStatus("保存预设失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("保存预设失败：{0}"), error.Message)); return false; }
     }
 
     public bool LoadVisualPreset(string path)
@@ -542,10 +543,10 @@ public partial class Main : Control
             _particlePanel.Refresh(_visualizer.Particles);
             _settings.SetSong(_song);
             RefreshPreview();
-            SetStatus("已加载视觉预设。" + (skipped > 0 ? $"跳过 {skipped} 个不存在的轨道颜色。" : "") + BackgroundNotice());
+            SetStatus(AppLocale.T("已加载视觉预设。") + (skipped > 0 ? string.Format(AppLocale.T("跳过 {0} 个不存在的轨道颜色。"), skipped) : "") + BackgroundNotice());
             return true;
         }
-        catch (Exception error) { SetStatus("加载预设失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("加载预设失败：{0}"), error.Message)); return false; }
     }
 
     public void SetTime(double seconds)
@@ -598,15 +599,15 @@ public partial class Main : Control
         try
         {
             var stream = AudioPlayback.ReadStream(path);
-            if (stream == null) throw new ArgumentException("请选择 OGG / Vorbis、MP3 或 WAV 文件。");
+            if (stream == null) throw new ArgumentException(AppLocale.T("请选择 OGG / Vorbis、MP3 或 WAV 文件。"));
             _audio.Configure(new AudioSettings { Path = ProjectSettings.GlobalizePath(path) }, stream);
             RefreshAudioSettings();
             SynchronizeAudio(force: true);
             _settings.CollapseSection("AudioPanel");
-            SetStatus("已打开音频：" + Path.GetFileName(path));
+            SetStatus(string.Format(AppLocale.T("已打开音频：{0}"), Path.GetFileName(path)));
             return true;
         }
-        catch (Exception error) { SetStatus("打开音频失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("打开音频失败：{0}"), error.Message)); return false; }
     }
 
     public void ClearAudio()
@@ -794,10 +795,10 @@ public partial class Main : Control
             _visualizer.SetBackground(_visualizer.Background with { Type = BackgroundType.Image, ImagePath = ProjectSettings.GlobalizePath(path) }, reloadImage: true);
             RefreshBackgroundSettings();
             _settings.CollapseSection("BackgroundPanel");
-            SetStatus("已打开背景图片：" + Path.GetFileName(path));
+            SetStatus(string.Format(AppLocale.T("已打开背景图片：{0}"), Path.GetFileName(path)));
             return true;
         }
-        catch (Exception error) { SetStatus("打开背景图片失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("打开背景图片失败：{0}"), error.Message)); return false; }
     }
 
     public void ClearBackgroundImage()
@@ -830,8 +831,8 @@ public partial class Main : Control
     private string BackgroundNotice() => _visualizer.Background.Type == BackgroundType.Video &&
         _visualizer.Background.Video.Path.Length > 0 &&
         (_videoBackground.Error.Length > 0 || !File.Exists(_visualizer.Background.Video.Path))
-        ? " · 背景视频不可用，已使用底色。" :
-        _visualizer.BackgroundWarning.Length == 0 ? "" : " · 背景图片不可用，已使用背景色。";
+        ? AppLocale.T(" · 背景视频不可用，已使用底色。") :
+        _visualizer.BackgroundWarning.Length == 0 ? "" : AppLocale.T(" · 背景图片不可用，已使用背景色。");
 
     public Godot.Collections.Dictionary GetAppearanceInfo() => new()
     {
@@ -884,7 +885,7 @@ public partial class Main : Control
         bool hours = _playback.DurationSeconds >= 3600;
         _timeLabel.Text = $"{TimeText.Format(time, hours)} / {TimeText.Format(_playback.DurationSeconds, hours)}";
         _play.Icon = _playback.IsPlaying ? _pauseIcon : _playIcon;
-        _play.TooltipText = (_playback.IsPlaying ? "暂停" : "播放") + "（Space）";
+        _play.TooltipText = string.Format(AppLocale.T("{0}（Space）"), AppLocale.T(_playback.IsPlaying ? "暂停" : "播放"));
     }
 
     public void SetUiVisible(bool visible)
@@ -976,7 +977,7 @@ public partial class Main : Control
         {
             settings.Validate();
             if (settings.EndSeconds > _playback.DurationSeconds)
-                throw new ArgumentException("导出结束时间不能超过当前播放时长。");
+                throw new ArgumentException(AppLocale.T("导出结束时间不能超过当前播放时长。"));
             _exportFrameTime = settings.StartSeconds;
             _exportDialog.Begin(settings, ffmpegPath);
             if (video != null)
@@ -990,8 +991,8 @@ public partial class Main : Control
             await VideoExporter.ExportAsync(settings, ffmpegPath, CaptureFrameAsync,
                 progress => { _exportProgress = progress; _exportDialog.Report(progress); }, _exportCancellation.Token,
                 _audio.GetExportSettings());
-            SetStatus($"已导出 {settings.FrameCount} 帧（{TimeText.Format(settings.FrameCount / (double)settings.FramesPerSecond)}）：{settings.OutputPath}");
-            _exportDialog.Finish("导出完成：" + settings.OutputPath);
+            SetStatus(string.Format(AppLocale.T("已导出 {0} 帧（{1}）：{2}"), settings.FrameCount, TimeText.Format(settings.FrameCount / (double)settings.FramesPerSecond), settings.OutputPath));
+            _exportDialog.Finish(string.Format(AppLocale.T("导出完成：{0}"), settings.OutputPath));
             GD.Print("[M3] Export completed: " + settings.OutputPath);
         }
         catch (OperationCanceledException)
@@ -1004,7 +1005,7 @@ public partial class Main : Control
         {
             _exportError = error.Message;
             _exportProgress = _exportProgress with { Stage = "failed" };
-            SetStatus("导出失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("导出失败：{0}"), error.Message));
             _exportDialog.Finish(_status.Text);
             GD.PushWarning("[M3] " + error.Message);
         }

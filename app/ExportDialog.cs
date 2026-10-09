@@ -54,6 +54,7 @@ public partial class ExportDialog : Window
 
     public override void _Ready()
     {
+        AppLocale.BindTitle(this, "导出视频");
         const string ui = "Margin/Content/";
         _path = GetNode<LineEdit>(ui + "Output/Path");
         _ffmpeg = GetNode<LineEdit>(ui + "Ffmpeg/Path");
@@ -69,7 +70,9 @@ public partial class ExportDialog : Window
         _message = GetNode<Label>(ui + "Message");
         _progress = GetNode<ProgressBar>(ui + "Progress");
         _save = GetNode<FileDialog>("SaveDialog");
+        AppLocale.BindTitle(_save, "选择视频输出文件");
         _overwrite = GetNode<ConfirmationDialog>("Overwrite");
+        _overwrite.Title = AppLocale.T("确认覆盖");
         _size = GetNode<OptionButton>(ui + "Format/Size");
         _fps = GetNode<OptionButton>(ui + "Format/Fps");
         _size.AddItem("1080p · 1920 × 1080"); _size.AddItem("1440p · 2560 × 1440"); _size.AddItem("4K · 3840 × 2160");
@@ -86,6 +89,7 @@ public partial class ExportDialog : Window
         _ffmpegBrowse = GetNode<Button>(ui + "Ffmpeg/Browse");
         _ffmpegHint = GetNode<RichTextLabel>(ui + "FfmpegHint");
         _ffmpegDialog = GetNode<FileDialog>("FfmpegDialog");
+        AppLocale.BindTitle(_ffmpegDialog, "选择 FFmpeg 可执行文件");
         _ffmpegHint.MetaClicked += meta => OS.ShellOpen(meta.AsString());
         _ffmpeg.TextSubmitted += _ => FfmpegEdited();
         _ffmpeg.FocusExited += FfmpegEdited;
@@ -175,9 +179,10 @@ public partial class ExportDialog : Window
     public void Open()
     {
         string sound = _audio.Enabled && _audio.Path.Length > 0
-            ? $"音频：{Path.GetFileName(_audio.Path)}，偏移 {_audio.OffsetSeconds:+0.###;-0.###;0} 秒（AAC）" : "无音频";
-        _message.Text = "包含内容：" + _contents + "\n" + sound +
-            (_assetWarning.Length > 0 ? "\n注意：" + _assetWarning : "");
+            ? string.Format(AppLocale.T("音频：{0}，偏移 {1} 秒（AAC）"), Path.GetFileName(_audio.Path), _audio.OffsetSeconds.ToString("+0.###;-0.###;0"))
+            : AppLocale.T("无音频");
+        _message.Text = string.Format(AppLocale.T("包含内容：{0}"), _contents) + "\n" + sound +
+            (_assetWarning.Length > 0 ? "\n" + string.Format(AppLocale.T("注意：{0}"), _assetWarning) : "");
         _message.TooltipText = _audio.Path + (_assetDetails.Length > 0 ? "\n" + _assetDetails : "");
         _progress.Value = 0;
         PopupCentered();
@@ -205,8 +210,8 @@ public partial class ExportDialog : Window
             FfmpegPathChanged?.Invoke();
         }
         _ffmpeg.TooltipText = probe.Found
-            ? "已找到：" + probe.Resolved + (probe.Version.Length > 0 ? "\n" + probe.Version : "")
-            : "未找到可用的 FFmpeg，请见下方提示。";
+            ? AppLocale.T("已找到：") + probe.Resolved + (probe.Version.Length > 0 ? "\n" + probe.Version : "")
+            : AppLocale.T("未找到可用的 FFmpeg，请见下方提示。");
         _ffmpegHint.Visible = !probe.Found;
     }
 
@@ -245,12 +250,12 @@ public partial class ExportDialog : Window
             if (File.Exists(settings.OutputPath))
             {
                 _pending = settings;
-                _overwrite.DialogText = "覆盖这个视频文件？\n" + settings.OutputPath + "\n导出成功后才替换原文件。";
+                _overwrite.DialogText = string.Format(AppLocale.T("覆盖这个视频文件？\n{0}\n导出成功后才替换原文件。"), settings.OutputPath);
                 _overwrite.PopupCentered();
             }
             else ExportRequested?.Invoke(settings, _ffmpeg.Text.Trim());
         }
-        catch (Exception error) { Finish("设置无效：" + error.Message); }
+        catch (Exception error) { Finish(string.Format(AppLocale.T("设置无效：{0}"), error.Message)); }
     }
 
     public void Begin(ExportSettings settings, string ffmpeg)
@@ -280,8 +285,8 @@ public partial class ExportDialog : Window
         };
         _message.Text = progress.Stage switch
         {
-            "rendering" => $"渲染帧：{progress.Frames} / {progress.TotalFrames}",
-            "encoding" => $"视频编码：{progress.Frames} / {progress.TotalFrames}",
+            "rendering" => string.Format(AppLocale.T("渲染帧：{0} / {1}"), progress.Frames, progress.TotalFrames),
+            "encoding" => string.Format(AppLocale.T("视频编码：{0} / {1}"), progress.Frames, progress.TotalFrames),
             "completed" => "导出完成。",
             _ => "正在检查 FFmpeg…"
         };

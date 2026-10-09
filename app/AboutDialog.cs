@@ -6,10 +6,11 @@ public partial class AboutDialog : Window
 {
     public override void _Ready()
     {
+        AppLocale.BindTitle(this, "关于 Trifle");
         CloseRequested += Hide;
         var version = ProjectSettings.GetSetting("application/config/version", "").AsString();
         GetNode<Label>("Margin/Content/Version").Text =
-            (version.Length > 0 ? "版本 " + version : "开发版本") + " · MIDI 钢琴可视化";
+            (version.Length > 0 ? AppLocale.T("版本 ") + version : AppLocale.T("开发版本")) + AppLocale.T(" · MIDI 钢琴可视化");
         GetNode<RichTextLabel>("Margin/Content/GitHub").MetaClicked +=
             meta => OS.ShellOpen(meta.AsString());
     }

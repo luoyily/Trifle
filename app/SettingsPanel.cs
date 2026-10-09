@@ -58,8 +58,13 @@ public partial class SettingsPanel : PanelContainer
         _white = GetNode<ColorPickerButton>(keyboard + "White/Value");
         _black = GetNode<ColorPickerButton>(keyboard + "Black/Value");
         _resetLayout = GetNode<Button>(keyboard + "ResetLayout");
-        _colorMode.AddItem("按通道（Channel）");
-        _colorMode.AddItem("按轨道（Track）");
+        PopulateColorModeItems();
+        AppLocale.LanguageChanged += () =>
+        {
+            int selected = _colorMode.Selected;
+            PopulateColorModeItems();
+            _colorMode.Select(selected);
+        };
         _lookAhead.ValueChanged += value => { if (!_syncing && !_busy) LookAheadChanged?.Invoke(value); };
         _colorMode.ItemSelected += index => { if (!_busy) ColorModeChanged?.Invoke((int)index); };
         _colorTarget.ItemSelected += _ => RefreshColor();
@@ -135,7 +140,7 @@ public partial class SettingsPanel : PanelContainer
         _lastPitch.SetValueNoSignal(_visualizer.LastPitch);
         _firstPitch.MaxValue = _visualizer.LastPitch;
         _lastPitch.MinValue = _visualizer.FirstPitch;
-        _rangeSummary.Text = $"{KeyboardLayout.PitchName(_visualizer.FirstPitch)} – {KeyboardLayout.PitchName(_visualizer.LastPitch)} · {_visualizer.LastPitch - _visualizer.FirstPitch + 1} 键";
+        _rangeSummary.Text = string.Format(AppLocale.T("{0} – {1} · {2} 键"), KeyboardLayout.PitchName(_visualizer.FirstPitch), KeyboardLayout.PitchName(_visualizer.LastPitch), _visualizer.LastPitch - _visualizer.FirstPitch + 1);
         var appearance = _visualizer.KeyboardAppearance;
         foreach (var value in new[] { _keyboardX, _keyboardY, _keyboardWidth, _keyboardHeight }) value.MaxValue = 100;
         _keyboardX.SetValueNoSignal(appearance.X * 100);
@@ -152,6 +157,13 @@ public partial class SettingsPanel : PanelContainer
         ParameterRow.SyncAll(this);
     }
 
+    private void PopulateColorModeItems()
+    {
+        _colorMode.Clear();
+        _colorMode.AddItem(AppLocale.T("按通道（Channel）"));
+        _colorMode.AddItem(AppLocale.T("按轨道（Track）"));
+    }
+
     private void RequestRange()
     {
         if (!_syncing && !_busy) PitchRangeChanged?.Invoke((int)_firstPitch.Value, (int)_lastPitch.Value);
@@ -165,15 +177,15 @@ public partial class SettingsPanel : PanelContainer
         if (_visualizer.GetColorMode() == (int)NoteColorMode.Track)
         {
             foreach (var track in _song.Tracks.Where(track => track.NoteCount > 0))
-                _colorTarget.AddItem($"轨道 {track.Index + 1} · {track.Name}", track.Index);
-            if (_colorTarget.ItemCount == 0) _colorTarget.Text = "无音符轨道";
+                _colorTarget.AddItem(string.Format(AppLocale.T("轨道 {0} · {1}"), track.Index + 1, track.Name), track.Index);
+            if (_colorTarget.ItemCount == 0) _colorTarget.Text = AppLocale.T("无音符轨道");
             else _colorTarget.Select(0);
         }
         else
         {
             var used = _song.Notes.Select(note => note.Channel).Distinct().Order().ToArray();
             for (int channel = 0; channel < 16; channel++)
-                _colorTarget.AddItem($"通道 {channel + 1}" + (used.Contains(channel) ? " · 使用中" : ""), channel);
+                _colorTarget.AddItem(string.Format(AppLocale.T("通道 {0}"), channel + 1) + (used.Contains(channel) ? AppLocale.T(" · 使用中") : ""), channel);
             _colorTarget.Select(used.FirstOrDefault());
         }
         _colorTarget.Disabled = _busy || _colorTarget.ItemCount == 0;

@@ -18,8 +18,13 @@ public partial class NoteAppearancePanel : VBoxContainer
         _style = GetNode<EffectSection>("Style");
         _emissionSection = GetNode<EffectSection>("Emission");
         _shape = GetNode<OptionButton>("Style/Fields/Content/Shape");
-        _shape.AddItem("直角矩形");
-        _shape.AddItem("圆角矩形");
+        PopulateShapeItems();
+        AppLocale.LanguageChanged += () =>
+        {
+            int selected = _shape.Selected;
+            PopulateShapeItems();
+            _shape.Select(selected);
+        };
         _radius = GetNode<SpinBox>("Style/Fields/Content/Radius/Value");
         _opacity = GetNode<SpinBox>("Style/Fields/Content/Opacity/Value");
         _brightness = GetNode<SpinBox>("Style/Fields/Content/Brightness/Value");
@@ -37,6 +42,13 @@ public partial class NoteAppearancePanel : VBoxContainer
         };
         GetNode<Button>("Emission/Fields/Content/Reset").Pressed += () => Request(_appearance with { Emission = new NoteAppearance().Emission });
         Refresh(_appearance);
+    }
+
+    private void PopulateShapeItems()
+    {
+        _shape.Clear();
+        _shape.AddItem(AppLocale.T("直角矩形"));
+        _shape.AddItem(AppLocale.T("圆角矩形"));
     }
 
     private void Request(NoteAppearance appearance) { if (!_syncing && !_busy) AppearanceChanged?.Invoke(appearance); }

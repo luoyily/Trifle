@@ -18,7 +18,7 @@ public partial class Main
         _quick.RefreshBackground(_visualizer.Background, _visualizer.HasBackgroundImage,
             _videoBackground.Available, _videoBackground.Loading, _videoBackground.Error);
         if (_visualizer.Background.Type == BackgroundType.Video && _videoBackground.Error.Length > 0 && !_busy)
-            SetStatus("背景视频不可用，已使用底色。请检查视频和 FFmpeg 路径。", _videoBackground.Error);
+            SetStatus(AppLocale.T("背景视频不可用，已使用底色。请检查视频和 FFmpeg 路径。"), _videoBackground.Error);
     }
 
     public bool LoadBackgroundVideo(string path)
@@ -27,23 +27,23 @@ public partial class Main
         try
         {
             path = ProjectSettings.GlobalizePath(path);
-            if (!File.Exists(path)) throw new FileNotFoundException("背景视频不存在。", path);
+            if (!File.Exists(path)) throw new FileNotFoundException(AppLocale.T("背景视频不存在。"), path);
             ApplyVideoSettings(_visualizer.Background.Video with { Path = path });
             _visualizer.SetBackground(_visualizer.Background with { Type = BackgroundType.Video }, allowFallback: true);
             RefreshBackgroundSettings();
             _videoBackground.Configure(_visualizer.Background, _exportDialog.FfmpegPath, _playback.TimeSeconds, reload: true);
             _settings.CollapseSection("BackgroundPanel");
-            SetStatus("已选择背景视频：" + Path.GetFileName(path));
+            SetStatus(string.Format(AppLocale.T("已选择背景视频：{0}"), Path.GetFileName(path)));
             return true;
         }
-        catch (Exception error) { SetStatus("打开背景视频失败：" + error.Message); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("打开背景视频失败：{0}"), error.Message)); return false; }
     }
 
     public void ClearBackgroundVideo()
     {
         if (_busy) return;
         ApplyVideoSettings(_visualizer.Background.Video with { Path = "" });
-        SetStatus("已移除背景视频。");
+        SetStatus(AppLocale.T("已移除背景视频。"));
     }
 
     private void ApplyVideoSettings(VideoBackgroundSettings settings)

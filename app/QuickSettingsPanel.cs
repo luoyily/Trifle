@@ -36,12 +36,21 @@ public partial class QuickSettingsPanel : VBoxContainer
         _videoFiles = GetNode<FileDialog>("VideoFiles");
         _scoreFiles = GetNode<FileDialog>("ScoreFiles");
         _scoreFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+        AppLocale.BindTitle(_audioFiles, "选择外部音频");
+        AppLocale.BindTitle(_imageFiles, "选择背景图片");
+        AppLocale.BindTitle(_videoFiles, "选择背景视频");
+        AppLocale.BindTitle(_scoreFiles, "选择 MuseScore 乐谱");
         _audioFiles.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
         _imageFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyPictures);
         _videoFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyVideos);
-        foreach (string type in new[] { "纯色", "渐变", "图片", "视频" }) _type.AddItem(type);
-        _type.ItemSelected += v => { if (!_syncing && !_busy) BackgroundTypeChanged?.Invoke((int)v); };
-        _color.ColorChanged += c => { if (!_syncing && !_busy) ColorChanged?.Invoke(c); };
+        PopulateTypeItems();
+        AppLocale.LanguageChanged += () =>
+        {
+            int selected = _type.Selected;
+            PopulateTypeItems();
+            _type.Select(selected);
+        };
+        _type.ItemSelected += v => { if (!_syncing && !_busy) BackgroundTypeChanged?.Invoke((int)v); };        _color.ColorChanged += c => { if (!_syncing && !_busy) ColorChanged?.Invoke(c); };
         _endColor.ColorChanged += c => { if (!_syncing && !_busy) EndColorChanged?.Invoke(c); };
         GetNode<Button>("Midi/Load").Pressed += () => { if (!_busy) MidiRequested?.Invoke(); };
         GetNode<Button>("Midi/Clear").Pressed += () => { if (!_busy) MidiClearRequested?.Invoke(); };
@@ -63,18 +72,24 @@ public partial class QuickSettingsPanel : VBoxContainer
         RefreshScore("", false);
     }
 
+    private void PopulateTypeItems()
+    {
+        _type.Clear();
+        foreach (string type in new[] { "纯色", "渐变", "图片", "视频" }) _type.AddItem(AppLocale.T(type));
+    }
+
     private void FileStatus(string node, string path, bool available, string empty, string detail = "")
     {
         var label = GetNode<Label>(node);
-        label.Text = path.Length == 0 ? empty : (available ? Path.GetFileName(path) + detail : "不可用 · " + Path.GetFileName(path));
-        label.TooltipText = path.Length == 0 ? empty : path + (available ? "" : "\n文件不可用，请重新选择");
+        label.Text = path.Length == 0 ? empty : (available ? Path.GetFileName(path) + detail : string.Format(AppLocale.T("不可用 · {0}"), Path.GetFileName(path)));
+        label.TooltipText = path.Length == 0 ? empty : path + (available ? "" : "\n" + AppLocale.T("文件不可用，请重新选择"));
     }
 
     public void RefreshMidi(string path, bool available, bool fromScore = false)
     {
         _hasMidi = path.Length > 0;
         FileStatus("Midi/File", path, available, "未选择文件");
-        if (fromScore && path.Length > 0) GetNode<Label>("Midi/File").Text = available ? "乐谱内 MIDI" : "不可用 · 乐谱内 MIDI";
+        if (fromScore && path.Length > 0) GetNode<Label>("Midi/File").Text = available ? AppLocale.T("乐谱内 MIDI") : string.Format(AppLocale.T("不可用 · {0}"), AppLocale.T("乐谱内 MIDI"));
         SetBusy(_busy);
     }
 
@@ -112,10 +127,10 @@ public partial class QuickSettingsPanel : VBoxContainer
         _endColor.Visible = settings.Type == BackgroundType.Gradient;
         GetNode<Control>("Background/Image").Visible = file;
         FileStatus("Background/Image/File", path, video ? videoAvailable || videoLoading : available,
-            video ? "未选择视频" : "未选择图片", video && videoLoading ? " · 载入中" : "");
+            video ? AppLocale.T("未选择视频") : AppLocale.T("未选择图片"), video && videoLoading ? AppLocale.T(" · 载入中") : "");
         if (video && videoError.Length > 0) GetNode<Label>("Background/Image/File").TooltipText = path + "\n" + videoError;
-        GetNode<Button>("Background/Image/Load").TooltipText = video ? "选择或替换背景视频" : "选择或替换背景图片";
-        GetNode<Button>("Background/Image/Clear").TooltipText = video ? "移除背景视频" : "移除背景图片";
+        GetNode<Button>("Background/Image/Load").TooltipText = video ? AppLocale.T("选择或替换背景视频") : AppLocale.T("选择或替换背景图片");
+        GetNode<Button>("Background/Image/Clear").TooltipText = video ? AppLocale.T("移除背景视频") : AppLocale.T("移除背景图片");
         _syncing = false;
         SetBusy(_busy);
     }

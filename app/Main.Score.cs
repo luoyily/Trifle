@@ -52,7 +52,7 @@ public partial class Main
         catch (Exception error)
         {
             _scoreError = error.Message;
-            SetStatus("载入乐谱失败：" + error.Message);
+            SetStatus(string.Format(AppLocale.T("载入乐谱失败：{0}"), error.Message));
             GD.PushWarning(_status.Text);
             return false;
         }
@@ -73,8 +73,8 @@ public partial class Main
         SetTime(time);
         _projectPath = ""; _projectMenu.SetProjectPath(""); UpdateTitle();
         _settings.RestoreExpandedSections(new());
-        SetStatus($"已载入乐谱 · {bundle.Title}（{bundle.Pages.Length} 页，{bundle.Rows.Length} 行） · " +
-            (external ? "保留外部 MIDI，按小节网格同步" : "使用乐谱内 MIDI"));
+        SetStatus(string.Format(AppLocale.T("已载入乐谱 · {0}（{1} 页，{2} 行） · {3}"), bundle.Title, bundle.Pages.Length, bundle.Rows.Length,
+            external ? AppLocale.T("保留外部 MIDI，按小节网格同步") : AppLocale.T("使用乐谱内 MIDI")));
     }
 
     private void ClearScoreState()
@@ -95,7 +95,7 @@ public partial class Main
     {
         if (_busy) return;
         try { _visualizer.Score.ApplySettings(settings); RefreshPreview(); }
-        catch (Exception error) { SetStatus("乐谱设置无效：" + error.Message); }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("乐谱设置无效：{0}"), error.Message)); }
         RefreshScoreSettings();
     }
 
@@ -118,14 +118,14 @@ public partial class Main
             var bundle = _visualizer.Score.Bundle;
             if (fromScore == _midiFromScore) return true;
             if (!fromScore && _externalMidiPath.Length == 0)
-                throw new InvalidOperationException("请先在快速设置中选择外部 MIDI 文件。");
+                throw new InvalidOperationException(AppLocale.T("请先在快速设置中选择外部 MIDI 文件。"));
             var song = fromScore ? ReadScoreMidi(bundle, _scorePath) : ReadMidiFile(_externalMidiPath);
             var timeline = fromScore ? bundle.Timeline : ScoreTimeline.ForExternalMidi(bundle, song, _scoreSync);
             ReplaceScoreMidi(song, fromScore, timeline);
-            SetStatus(fromScore ? "已切换为乐谱内 MIDI。" : "已切换为外部 MIDI，按小节网格同步。");
+            SetStatus(fromScore ? AppLocale.T("已切换为乐谱内 MIDI。") : AppLocale.T("已切换为外部 MIDI，按小节网格同步。"));
             return true;
         }
-        catch (Exception error) { SetStatus("切换 MIDI 来源失败：" + error.Message); RefreshScoreSettings(); return false; }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("切换 MIDI 来源失败：{0}"), error.Message)); RefreshScoreSettings(); return false; }
     }
 
     private void ReplaceScoreMidi(MidiSong song, bool fromScore, ScoreTimeline timeline)
@@ -154,7 +154,7 @@ public partial class Main
             _scoreSync = settings;
             RefreshAudioSettings(); RefreshScoreSettings();
         }
-        catch (Exception error) { SetStatus("乐谱同步设置无效：" + error.Message); RefreshScoreSettings(); }
+        catch (Exception error) { SetStatus(string.Format(AppLocale.T("乐谱同步设置无效：{0}"), error.Message)); RefreshScoreSettings(); }
     }
 
     public void JumpScoreRow(int direction)

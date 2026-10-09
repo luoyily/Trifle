@@ -14,7 +14,7 @@ public partial class ParameterRow : HBoxContainer
         _number = GetNode<SpinBox>("Value");
         _slider = GetNode<HSlider>("Slider");
         string label = GetNode<Label>("Label").Text;
-        _number.TooltipText = label + "：可直接输入精确数值";
+        _number.TooltipText = string.Format(AppLocale.T("{0}：可直接输入精确数值"), AppLocale.T(label));
         _slider.TooltipText = label;
         _slider.ValueChanged += value =>
         {

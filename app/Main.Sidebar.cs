@@ -64,7 +64,7 @@ public partial class Main
                     var bundle = Trifle.Score.MuseScoreBundle.Read(path);
                     ActivateScore(bundle, ReadScoreMidi(bundle, path), path, ReadMidiFile(midi[0]));
                 }
-                catch (Exception error) { SetStatus("载入 MIDI 与乐谱失败：" + error.Message); return; }
+                catch (Exception error) { SetStatus(string.Format(AppLocale.T("载入 MIDI 与乐谱失败：{0}"), error.Message)); return; }
             }
         }
         if (audio.Length > 0) LoadAudioFile(audio[0]);
@@ -99,28 +99,28 @@ public partial class Main
         var background = _visualizer.Background;
         string kind = background.Type switch
         {
-            BackgroundType.Gradient => "渐变背景",
-            BackgroundType.Image => _visualizer.HasBackgroundImage ? "图片背景" : "背景色（图片不可用）",
-            BackgroundType.Video => background.Video.Path.Length > 0 ? "视频背景" : "底色（未选择视频）",
-            _ => "纯色背景"
+            BackgroundType.Gradient => AppLocale.T("渐变背景"),
+            BackgroundType.Image => _visualizer.HasBackgroundImage ? AppLocale.T("图片背景") : AppLocale.T("背景色（图片不可用）"),
+            BackgroundType.Video => background.Video.Path.Length > 0 ? AppLocale.T("视频背景") : AppLocale.T("底色（未选择视频）"),
+            _ => AppLocale.T("纯色背景")
         };
-        var contents = new List<string> { "MIDI 音符", "键盘", kind };
-        if (_visualizer.Particles.Enabled || _visualizer.Particles.Curves) contents.Add("粒子 / 流线");
-        if (_audio.Settings.Enabled && _audio.Stream != null) contents.Add("音频");
-        if (_visualizer.Score.Bundle != null && _visualizer.Score.Settings.Enabled) contents.Add("同步乐谱");
+        var contents = new List<string> { AppLocale.T("MIDI 音符"), AppLocale.T("键盘"), kind };
+        if (_visualizer.Particles.Enabled || _visualizer.Particles.Curves) contents.Add(AppLocale.T("粒子 / 流线"));
+        if (_audio.Settings.Enabled && _audio.Stream != null) contents.Add(AppLocale.T("音频"));
+        if (_visualizer.Score.Bundle != null && _visualizer.Score.Settings.Enabled) contents.Add(AppLocale.T("同步乐谱"));
         var warnings = new List<string>();
         if (background.Type == BackgroundType.Video && background.Video.Path.Length > 0)
         {
-            if (!File.Exists(background.Video.Path)) warnings.Add("背景视频源文件不可用，请重新选择视频后导出。");
-            else if (_videoBackground.Error.Length > 0) warnings.Add("背景视频预览不可用，请检查视频与 FFmpeg 路径后导出。");
+            if (!File.Exists(background.Video.Path)) warnings.Add(AppLocale.T("背景视频源文件不可用，请重新选择视频后导出。"));
+            else if (_videoBackground.Error.Length > 0) warnings.Add(AppLocale.T("背景视频预览不可用，请检查视频与 FFmpeg 路径后导出。"));
         }
-        if (_visualizer.BackgroundWarning.Length > 0) warnings.Add("背景图片不可用，将使用背景色。");
+        if (_visualizer.BackgroundWarning.Length > 0) warnings.Add(AppLocale.T("背景图片不可用，将使用背景色。"));
         else if (background.Type == BackgroundType.Image && background.ImagePath.Length > 0 && !File.Exists(background.ImagePath))
-            warnings.Add("背景源文件不可用，将使用已加载的图片。");
+            warnings.Add(AppLocale.T("背景源文件不可用，将使用已加载的图片。"));
         if (_audio.Settings.Enabled && _audio.Settings.Path.Length > 0 && !File.Exists(_audio.Settings.Path))
-            warnings.Add("音频源文件不可用，请重新选择音频后导出。");
+            warnings.Add(AppLocale.T("音频源文件不可用，请重新选择音频后导出。"));
         if (_scorePath.Length > 0 && !File.Exists(_scorePath))
-            warnings.Add("乐谱源文件不可用，将使用已加载的乐谱。");
+            warnings.Add(AppLocale.T("乐谱源文件不可用，将使用已加载的乐谱。"));
         _exportDialog.SetContents(string.Join(" · ", contents), string.Join("\n", warnings),
             background.Type == BackgroundType.Video ? _videoBackground.Error : _visualizer.BackgroundWarning);
         _quick.RefreshMidi(_song.SourcePath, File.Exists(_song.SourcePath), _midiFromScore);

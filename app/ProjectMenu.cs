@@ -23,14 +23,7 @@ public partial class ProjectMenu : MenuButton
     public override void _Ready()
     {
         var popup = GetPopup();
-        popup.AddItem("打开项目…", (int)ProjectFileAction.OpenProject);
-        popup.AddItem("保存项目", (int)ProjectFileAction.SaveProject);
-        popup.AddItem("项目另存为…", (int)ProjectFileAction.SaveProjectAs);
-        popup.AddSeparator();
-        popup.AddItem("加载视觉预设…", (int)ProjectFileAction.OpenPreset);
-        popup.AddItem("保存视觉预设…", (int)ProjectFileAction.SavePreset);
-        popup.AddSeparator();
-        popup.AddItem("关于 Trifle…", (int)ProjectFileAction.About);
+        BuildMenu(popup);
         popup.IdPressed += id =>
         {
             var action = (ProjectFileAction)id;
@@ -50,8 +43,30 @@ public partial class ProjectMenu : MenuButton
         _missing.Confirmed += () => ChooseFile(_missingAudio ? ProjectFileAction.RelinkAudio :
             _separateScore ? ProjectFileAction.RelinkScore : ProjectFileAction.RelinkMidi);
         _missing.Canceled += () => RelinkCancelled?.Invoke();
-        _withoutAudio = _missing.AddButton("不使用音频", true, "without_audio");
+        _withoutAudio = _missing.AddButton(AppLocale.T("不使用音频"), true, "without_audio");
         _withoutAudio.Pressed += () => FileRequested?.Invoke(ProjectFileAction.WithoutAudio, "");
+        // The popup is built once; rebuild it when the locale changes. The missing-file dialog's
+        // Title / buttons are retranslated on every RequestReplacement call.
+        AppLocale.LanguageChanged += RefreshMenuTexts;
+    }
+
+    private void RefreshMenuTexts()
+    {
+        BuildMenu(GetPopup());
+        if (_withoutAudio != null) _withoutAudio.Text = AppLocale.T("不使用音频");
+    }
+
+    private void BuildMenu(PopupMenu popup)
+    {
+        popup.Clear();
+        popup.AddItem(AppLocale.T("打开项目…"), (int)ProjectFileAction.OpenProject);
+        popup.AddItem(AppLocale.T("保存项目"), (int)ProjectFileAction.SaveProject);
+        popup.AddItem(AppLocale.T("项目另存为…"), (int)ProjectFileAction.SaveProjectAs);
+        popup.AddSeparator();
+        popup.AddItem(AppLocale.T("加载视觉预设…"), (int)ProjectFileAction.OpenPreset);
+        popup.AddItem(AppLocale.T("保存视觉预设…"), (int)ProjectFileAction.SavePreset);
+        popup.AddSeparator();
+        popup.AddItem(AppLocale.T("关于 Trifle…"), (int)ProjectFileAction.About);
     }
 
     public void SetProjectPath(string path) => _projectPath = path;
@@ -71,10 +86,10 @@ public partial class ProjectMenu : MenuButton
         _missingAudio = audio;
         _missingScore = score;
         _separateScore = false;
-        _missing.Title = audio ? "项目音频无法载入" : score ? "项目乐谱无法载入" : "项目 MIDI 无法载入";
-        _missing.OkButtonText = audio ? "重新选择音频…" : score ? "重新选择乐谱…" : "重新选择 MIDI…";
+        _missing.Title = audio ? AppLocale.T("项目音频无法载入") : score ? AppLocale.T("项目乐谱无法载入") : AppLocale.T("项目 MIDI 无法载入");
+        _missing.OkButtonText = audio ? AppLocale.T("重新选择音频…") : score ? AppLocale.T("重新选择乐谱…") : AppLocale.T("重新选择 MIDI…");
         _withoutAudio.Visible = audio;
-        _missing.DialogText = message + "\n重新选择后继续；取消会保留当前项目。";
+        _missing.DialogText = message + "\n" + AppLocale.T("重新选择后继续；取消会保留当前项目。");
         _missing.PopupCentered();
     }
 
@@ -86,20 +101,20 @@ public partial class ProjectMenu : MenuButton
         _files.FileMode = save ? FileDialog.FileModeEnum.SaveFile : FileDialog.FileModeEnum.OpenFile;
         _files.Title = action switch
         {
-            ProjectFileAction.OpenProject => "打开 Trifle 项目",
-            ProjectFileAction.OpenPreset => "加载视觉预设",
-            ProjectFileAction.SavePreset => "保存视觉预设",
-            ProjectFileAction.RelinkMidi => _missingScore ? "重新选择项目的乐谱数据包" : "重新选择项目的 MIDI 文件",
-            ProjectFileAction.RelinkAudio => "重新选择项目的音频",
-            ProjectFileAction.RelinkScore => "重新选择项目的乐谱",
-            _ => "保存 Trifle 项目"
+            ProjectFileAction.OpenProject => AppLocale.T("打开 Trifle 项目"),
+            ProjectFileAction.OpenPreset => AppLocale.T("加载视觉预设"),
+            ProjectFileAction.SavePreset => AppLocale.T("保存视觉预设"),
+            ProjectFileAction.RelinkMidi => _missingScore ? AppLocale.T("重新选择项目的乐谱数据包") : AppLocale.T("重新选择项目的 MIDI 文件"),
+            ProjectFileAction.RelinkAudio => AppLocale.T("重新选择项目的音频"),
+            ProjectFileAction.RelinkScore => AppLocale.T("重新选择项目的乐谱"),
+            _ => AppLocale.T("保存 Trifle 项目")
         };
-        _files.Filters = action == ProjectFileAction.RelinkScore ? new[] { "*.mscz,*.json ; MuseScore 乐谱 / 数据包" }
+        _files.Filters = action == ProjectFileAction.RelinkScore ? new[] { "*.mscz,*.json ; " + AppLocale.T("MuseScore 乐谱 / 数据包") }
             : action == ProjectFileAction.RelinkMidi
-            ? (_missingScore ? new[] { "*.mscz,*.json ; MuseScore 乐谱 / 数据包" } : new[] { "*.mid,*.midi ; MIDI 文件" })
-            : action == ProjectFileAction.RelinkAudio ? new[] { "*.ogg,*.mp3,*.wav ; 音频（OGG / MP3 / WAV）", "*.ogg ; OGG / Vorbis 音频", "*.mp3 ; MP3 音频", "*.wav ; WAV 音频" }
-            : preset ? new[] { "*.trifle-preset.json ; Trifle 视觉预设" }
-            : new[] { "*.trifle.json ; Trifle 项目" };
+            ? (_missingScore ? new[] { "*.mscz,*.json ; " + AppLocale.T("MuseScore 乐谱 / 数据包") } : new[] { "*.mid,*.midi ; " + AppLocale.T("MIDI 文件") })
+            : action == ProjectFileAction.RelinkAudio ? new[] { "*.ogg,*.mp3,*.wav ; " + AppLocale.T("音频（OGG / MP3 / WAV）"), "*.ogg ; " + AppLocale.T("OGG / Vorbis 音频"), "*.mp3 ; " + AppLocale.T("MP3 音频"), "*.wav ; " + AppLocale.T("WAV 音频") }
+            : preset ? new[] { "*.trifle-preset.json ; " + AppLocale.T("Trifle 视觉预设") }
+            : new[] { "*.trifle.json ; " + AppLocale.T("Trifle 项目") };
         _files.CurrentFile = save ? (preset ? "visual.trifle-preset.json" : "project.trifle.json") : "";
         if (_projectPath.Length > 0)
         {

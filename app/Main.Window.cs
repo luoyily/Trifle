@@ -46,7 +46,7 @@ public partial class Main
                     work.End.X - target.X - decorations.X + borderOffset.X),
                 Math.Clamp(position.Y, work.Position.Y + borderOffset.Y,
                     work.End.Y - target.Y - decorations.Y + borderOffset.Y));
-            SetStatus($"窗口已调整为 16:9 · {target.X} × {target.Y}");
+            SetStatus(string.Format(AppLocale.T("窗口已调整为 16:9 · {0} × {1}"), target.X, target.Y));
         }
         finally { _fittingWindow = false; }
     }

@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+AppLocale="*res://app/AppLocale.cs"
 McpInteractionServer="*res://app/development_bridge.gd"
 
 [display]

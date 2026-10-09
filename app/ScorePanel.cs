@@ -44,6 +44,7 @@ public partial class ScorePanel : VBoxContainer
         _browseMuseScore = GetNode<Button>(import + "Program/Browse");
         _detectMuseScore = GetNode<Button>(import + "Detect");
         _museScoreFiles = GetNode<FileDialog>("MuseScoreFiles");
+        AppLocale.BindTitle(_museScoreFiles, "选择 MuseScore 程序");
         _browseMuseScore.Pressed += () =>
         {
             if (_busy) return;
@@ -115,7 +116,8 @@ public partial class ScorePanel : VBoxContainer
         if (bundle != null && cursor != null)
         {
             var row = bundle.Rows[cursor.Row];
-            text = $"第 {row.Page + 1}/{bundle.Pages.Length} 页 · 第 {cursor.Row + 1}/{bundle.Rows.Length} 行 · 小节 {row.FirstMeasure}–{row.LastMeasure}";
+            text = string.Format(AppLocale.T("第 {0}/{1} 页 · 第 {2}/{3} 行 · 小节 {4}–{5}"),
+                row.Page + 1, bundle.Pages.Length, cursor.Row + 1, bundle.Rows.Length, row.FirstMeasure, row.LastMeasure);
         }
         if (_position.Text != text) _position.Text = text;
         RefreshNavigation();

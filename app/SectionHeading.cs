@@ -19,6 +19,6 @@ public static class SectionHeading
     {
         button.Text = title;
         button.Icon = button.GetThemeIcon(open ? "chevron_down" : "chevron_right", "Trifle");
-        button.TooltipText = (open ? "折叠" : "展开") + title;
+        button.TooltipText = string.Format(AppLocale.T(open ? "折叠{0}" : "展开{0}"), AppLocale.T(title));
     }
 }

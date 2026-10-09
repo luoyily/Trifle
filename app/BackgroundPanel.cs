@@ -41,8 +41,16 @@ public partial class BackgroundPanel : VBoxContainer
         _loop = GetNode<CheckButton>(video + "Loop");
         _offset = GetNode<SpinBox>(video + "Offset/Value");
         _videoStatus = GetNode<Label>(video + "Status");
-        foreach (int height in VideoHeights) _videoResolution.AddItem("视频预览：" + height + "p");
-        foreach (int fps in VideoRates) _videoFps.AddItem("视频预览：" + fps + " FPS");
+        PopulateVideoItems();
+        PopulateStyleItems();
+        AppLocale.LanguageChanged += () =>
+        {
+            int gradient = _gradient.Selected, fit = _fit.Selected, resolution = _videoResolution.Selected, fps = _videoFps.Selected;
+            PopulateStyleItems();
+            PopulateVideoItems();
+            _gradient.Select(gradient); _fit.Select(fit);
+            _videoResolution.Select(resolution); _videoFps.Select(fps);
+        };
         void RequestVideo() { if (!_syncing && !_busy) VideoChanged?.Invoke(_settings.Video with
         {
             PreviewHeight = VideoHeights[_videoResolution.Selected], PreviewFramesPerSecond = VideoRates[_videoFps.Selected],
@@ -52,10 +60,7 @@ public partial class BackgroundPanel : VBoxContainer
         _videoFps.ItemSelected += _ => RequestVideo();
         _loop.Toggled += _ => RequestVideo();
         _offset.ValueChanged += _ => RequestVideo();
-        _gradient.AddItem("垂直渐变", (int)BackgroundGradient.Vertical);
-        _gradient.AddItem("水平渐变", (int)BackgroundGradient.Horizontal);
-        _fit.AddItem("完整显示 · 空白填背景色");
-        _fit.AddItem("铺满裁剪 · 居中");
+        PopulateStyleItems();
         _gradient.ItemSelected += v => { if (!_syncing && !_busy) GradientChanged?.Invoke(_gradient.GetItemId((int)v), new Color(_settings.EndColor)); };
         _fit.ItemSelected += v => { if (!_syncing && !_busy) FitChanged?.Invoke((int)v); };
         _color.ColorChanged += c => { if (!_syncing && !_busy) ColorChanged?.Invoke(c); };
@@ -64,8 +69,25 @@ public partial class BackgroundPanel : VBoxContainer
         Refresh(_settings, false);
     }
 
-    public void Refresh(BackgroundSettings settings, bool available, string videoStatus = "未选择视频", string videoError = "")
+    private void PopulateStyleItems()
     {
+        _gradient.Clear(); _fit.Clear();
+        _gradient.AddItem(AppLocale.T("垂直渐变"), (int)BackgroundGradient.Vertical);
+        _gradient.AddItem(AppLocale.T("水平渐变"), (int)BackgroundGradient.Horizontal);
+        _fit.AddItem(AppLocale.T("完整显示 · 空白填背景色"));
+        _fit.AddItem(AppLocale.T("铺满裁剪 · 居中"));
+    }
+
+    private void PopulateVideoItems()
+    {
+        _videoResolution.Clear(); _videoFps.Clear();
+        foreach (int height in VideoHeights) _videoResolution.AddItem(string.Format(AppLocale.T("视频预览：{0}p"), height));
+        foreach (int fps in VideoRates) _videoFps.AddItem(string.Format(AppLocale.T("视频预览：{0} FPS"), fps));
+    }
+
+    public void Refresh(BackgroundSettings settings, bool available, string videoStatus = null, string videoError = "")
+    {
+        videoStatus ??= AppLocale.T("未选择视频");
         _syncing = true; _settings = settings; _available = available;
         _gradient.Select(settings.Gradient == BackgroundGradient.Horizontal ? 1 : 0);
         _fit.Select((int)settings.Fit);

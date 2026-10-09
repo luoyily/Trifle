@@ -21,7 +21,7 @@ public partial class EffectSection : VBoxContainer
         _enabled = GetNode<CheckButton>("Header/Enabled");
         _fields = GetNode<Control>("Fields");
         _enabled.Visible = HasSwitch;
-        _enabled.TooltipText = "启用 / 关闭" + Title + "；保留已设置的参数";
+        _enabled.TooltipText = string.Format(AppLocale.T("启用 / 关闭{0}；保留已设置的参数"), AppLocale.T(Title));
         _enabled.Toggled += value => EnabledChanged?.Invoke(value);
         _expand.Toggled += SetExpanded;
         SetExpanded(_expand.ButtonPressed);
@@ -31,7 +31,7 @@ public partial class EffectSection : VBoxContainer
     {
         SectionHeading.ShowState(_expand, Title, expanded);
         _fields.Visible = expanded;
-        _expand.TooltipText = (expanded ? "折叠" : "展开") + Title + "参数";
+        _expand.TooltipText = string.Format(AppLocale.T(expanded ? "折叠{0}参数" : "展开{0}参数"), AppLocale.T(Title));
     }
 
     public void Refresh(bool enabled, bool busy)

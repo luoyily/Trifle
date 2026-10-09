@@ -19,7 +19,14 @@ public partial class ScoreSyncPanel : VBoxContainer
         _source = GetNode<OptionButton>("Fields/Content/Source/Value");
         _offset = GetNode<SpinBox>("Fields/Content/Offset/Value");
         _status = GetNode<Label>("Fields/Content/Status");
-        _source.AddItem("乐谱内 MIDI"); _source.AddItem("外部 MIDI");
+        PopulateSourceItems();
+        AppLocale.LanguageChanged += () =>
+        {
+            int selected = _source.Selected;
+            PopulateSourceItems();
+            _source.Select(selected);
+            _source.SetItemDisabled(1, !_hasExternal);
+        };
         _source.ItemSelected += index => { if (!_syncing && !_busy) MidiSourceChanged?.Invoke(index == 0); };
         _offset.ValueChanged += value => { if (!_syncing && !_busy) MeasureOffsetChanged?.Invoke((int)value); };
         Refresh(false, true, false, new ScoreSyncSettings());
@@ -36,6 +43,13 @@ public partial class ScoreSyncPanel : VBoxContainer
             ? "使用乐谱原始发声时间。选择 MIDI 文件可改用外部 MIDI。"
             : "按外部 MIDI 的拍号与速度表逐小节对齐。";
         _syncing = false; SetBusy(_busy);
+    }
+
+    private void PopulateSourceItems()
+    {
+        _source.Clear();
+        _source.AddItem(AppLocale.T("乐谱内 MIDI"));
+        _source.AddItem(AppLocale.T("外部 MIDI"));
     }
 
     public bool HasOpenPopup() => _source.GetPopup().Visible;
