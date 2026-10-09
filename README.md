@@ -12,6 +12,8 @@
 
   <img src="readme_assets/screenshot.jpg" width="720" alt="Trifle 截图">
 
+  **[▶ 示例视频（哔哩哔哩）](https://www.bilibili.com/video/BV1Aqps6eEjr/)**
+
 </div>
 
 ## 功能特点
