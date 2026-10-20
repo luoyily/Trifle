@@ -23,17 +23,22 @@ public partial class KeyboardLightPanel : VBoxContainer
         Section("Hit").EnabledChanged += v => Request(_settings with { HitEnabled = v });
         Section("Area").EnabledChanged += v => Request(_settings with { KeyLightEnabled = v });
         Section("Near").EnabledChanged += v => Request(_settings with { NearEnabled = v });
+        Section("ActiveNote").EnabledChanged += v => Request(_settings with { ActiveNoteEnabled = v });
         Bind("Keyboard/Strength", v => _settings with { KeyboardEmission = v });
         Bind("Hit/Strength", v => _settings with { HitEmission = v });
         Bind("Area/Strength", v => _settings with { KeyLightStrength = v });
         Bind("Area/Radius", v => _settings with { KeyLightRadius = v });
         Bind("Near/Strength", v => _settings with { NearStrength = v });
         Bind("Near/Distance", v => _settings with { NearDistance = v });
+        Bind("ActiveNote/Strength", v => _settings with { ActiveNoteStrength = v });
         Bind("Hit/Decay", v => _settings with { HitDecay = v });
+        Bind("Hit/Release", v => _settings with { ReleaseDecay = v });
         Reset("Keyboard", () => _settings with { KeyboardEmission = Defaults.KeyboardEmission });
-        Reset("Hit", () => _settings with { HitEmission = Defaults.HitEmission, HitDecay = Defaults.HitDecay });
+        Reset("Hit", () => _settings with { HitEmission = Defaults.HitEmission, HitDecay = Defaults.HitDecay,
+            ReleaseDecay = Defaults.ReleaseDecay });
         Reset("Area", () => _settings with { KeyLightStrength = Defaults.KeyLightStrength, KeyLightRadius = Defaults.KeyLightRadius });
         Reset("Near", () => _settings with { NearStrength = Defaults.NearStrength, NearDistance = Defaults.NearDistance });
+        Reset("ActiveNote", () => _settings with { ActiveNoteStrength = Defaults.ActiveNoteStrength });
         Refresh(_settings);
     }
 
@@ -50,7 +55,9 @@ public partial class KeyboardLightPanel : VBoxContainer
         Number("Area/Radius").SetValueNoSignal(settings.KeyLightRadius);
         Number("Near/Strength").SetValueNoSignal(settings.NearStrength);
         Number("Near/Distance").SetValueNoSignal(settings.NearDistance);
+        Number("ActiveNote/Strength").SetValueNoSignal(settings.ActiveNoteStrength);
         Number("Hit/Decay").SetValueNoSignal(settings.HitDecay);
+        Number("Hit/Release").SetValueNoSignal(settings.ReleaseDecay);
         _syncing = false;
         SetBusy(_busy);
     }
@@ -62,5 +69,6 @@ public partial class KeyboardLightPanel : VBoxContainer
         Section("Hit").Refresh(_settings.HitEnabled, busy);
         Section("Area").Refresh(_settings.KeyLightEnabled, busy);
         Section("Near").Refresh(_settings.NearEnabled, busy);
+        Section("ActiveNote").Refresh(_settings.ActiveNoteEnabled, busy);
     }
 }

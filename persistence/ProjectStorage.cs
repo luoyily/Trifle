@@ -166,7 +166,7 @@ public static class ProjectStorage
 
     private static readonly System.Collections.Generic.HashSet<string> KeyboardLightFields = new()
     {
-        "keyboardEnabled", "hitEnabled", "nearEnabled", "keyLightEnabled", "keyboardEmission", "hitEmission", "hitDecay", "nearStrength", "nearDistance", "keyLightStrength", "keyLightRadius"
+        "keyboardEnabled", "hitEnabled", "nearEnabled", "keyLightEnabled", "keyboardEmission", "hitEmission", "hitDecay", "releaseDecay", "nearStrength", "nearDistance", "activeNoteEnabled", "activeNoteStrength", "keyLightStrength", "keyLightRadius"
     };
     private static readonly System.Collections.Generic.HashSet<string> ContactLineFields = new()
     {

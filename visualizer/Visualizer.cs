@@ -79,7 +79,8 @@ public partial class Visualizer : Node2D
         _time = Math.Max(0, seconds);
         _keyboard.UpdateAt(_song, _time, _colors);
         _notes.SetNearLight(_keyboardLights, _keyboardBounds.Position.Y, _keyboard.ActiveKeyCount > 0);
-        _notes.UpdateAt(_song, _layout, _keyboardBounds, _time, Math.Max(0.1, LookAheadSeconds), _colors);
+        float activeNoteStrength = _keyboardLights.ActiveNoteEnabled ? (float)_keyboardLights.ActiveNoteStrength : 0;
+        _notes.UpdateAt(_song, _layout, _keyboardBounds, _time, Math.Max(0.1, LookAheadSeconds), _colors, activeNoteStrength);
         _hits.UpdateAt(_layout, _keyboardBounds, _time, _keyboard, _keyboardLights, _contactLine);
         _particles.UpdateAt(_layout, _keyboardBounds, _time, _colors);
         Score.SetTime(_time);

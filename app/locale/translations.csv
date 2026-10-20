@@ -411,3 +411,7 @@ The original is replaced only after a successful export."
 渐变,Gradient
 图片,Image
 视频,Video
+激活音符增亮,Active note highlight
+当前正在发声的音符整条提亮；与近键增亮可同时启用，效果叠加。,Brightens the whole note currently sounding; it can run alongside near-key highlight and stacks.
+恢复激活音符增亮参数,Reset active note highlight
+松键衰减（秒）,Release decay (s)

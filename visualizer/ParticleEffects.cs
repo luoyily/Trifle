@@ -9,7 +9,7 @@ namespace Trifle.Visuals;
 // frames. Dots and soft ribbons share persistent air parcels, including on seeks.
 public partial class ParticleEffects : MultiMeshInstance2D
 {
-    public const int BurstLimit = 64;
+    public const int BurstLimit = 128;
     private const int ParticleLimit = 16384;
     private const int CurveLimit = BurstLimit * 3;
     private const int CurveSegments = 64;

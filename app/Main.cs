@@ -702,6 +702,12 @@ public partial class Main : Control
         ApplyKeyboardLights(_visualizer.KeyboardLights with { KeyboardEmission = keyboard, HitEmission = hit,
             HitDecay = decay, NearStrength = near, NearDistance = distance });
 
+    public void SetReleaseDecay(double seconds) =>
+        ApplyKeyboardLights(_visualizer.KeyboardLights with { ReleaseDecay = seconds });
+
+    public void SetActiveNoteHighlight(bool enabled, double strength) =>
+        ApplyKeyboardLights(_visualizer.KeyboardLights with { ActiveNoteEnabled = enabled, ActiveNoteStrength = strength });
+
     public void SetContactLine(double emission, double width, double wave) =>
         ApplyContactLine(_visualizer.ContactLine with { LineEmission = emission, LineWidth = width, LineWave = wave });
 
@@ -748,6 +754,10 @@ public partial class Main : Control
     {
         ["keyboard_emission"] = _visualizer.KeyboardLights.KeyboardEmission, ["hit_emission"] = _visualizer.KeyboardLights.HitEmission,
         ["hit_decay"] = _visualizer.KeyboardLights.HitDecay, ["near_strength"] = _visualizer.KeyboardLights.NearStrength,
+        ["release_decay"] = _visualizer.KeyboardLights.ReleaseDecay,
+        ["near_enabled"] = _visualizer.KeyboardLights.NearEnabled,
+        ["active_note_enabled"] = _visualizer.KeyboardLights.ActiveNoteEnabled,
+        ["active_note_strength"] = _visualizer.KeyboardLights.ActiveNoteStrength,
         ["near_distance"] = _visualizer.KeyboardLights.NearDistance
     };
 

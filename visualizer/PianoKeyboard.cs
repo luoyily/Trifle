@@ -6,7 +6,6 @@ namespace Trifle.Visuals;
 
 public partial class PianoKeyboard : Node2D
 {
-    private const double ReleaseSeconds = 0.22;
     private readonly MidiNote[] _activeNotes = new MidiNote[128];
     private readonly MidiNote[] _releasedNotes = new MidiNote[128];
     private readonly MidiNote[] _lightNotes = new MidiNote[128];
@@ -82,13 +81,14 @@ public partial class PianoKeyboard : Node2D
         _colors = colors;
         Array.Clear(_activeNotes); Array.Clear(_releasedNotes);
         Array.Clear(_lightNotes); Array.Clear(_lightStrength);
+        double releaseDecay = _settings.ReleaseDecay;
         int end = _index.FirstStartingAfter(time);
-        for (int i = _index.FirstStillRelevant(time - ReleaseSeconds); i < end; i++)
+        for (int i = _index.FirstStillRelevant(time - releaseDecay); i < end; i++)
         {
             var note = song.Notes[i];
             if (!_layout.TryGetKey(note.Pitch, out _)) continue;
             if (note.IsActiveAt(time)) _activeNotes[note.Pitch] = note;
-            else if (time - note.EndSeconds < ReleaseSeconds &&
+            else if (time - note.EndSeconds < releaseDecay &&
                 (_releasedNotes[note.Pitch] == null || note.EndSeconds >= _releasedNotes[note.Pitch].EndSeconds))
                 _releasedNotes[note.Pitch] = note;
         }
@@ -102,7 +102,7 @@ public partial class PianoKeyboard : Node2D
             double age = time - note.StartSeconds;
             double attack = Math.Clamp(age / 0.025, 0, 1);
             attack = attack * attack * (3 - 2 * attack);
-            double release = note.IsActiveAt(time) ? 1 : Math.Pow(Math.Clamp(1 - (time - note.EndSeconds) / ReleaseSeconds, 0, 1), 2);
+            double release = note.IsActiveAt(time) ? 1 : Math.Pow(Math.Clamp(1 - (time - note.EndSeconds) / releaseDecay, 0, 1), 2);
             double pulse = Math.Pow(Math.Clamp(1 - age / _settings.HitDecay, 0, 1), 2);
             _lightStrength[key.Pitch] = (float)(attack * release * (1 + 0.25 * pulse));
         }
@@ -140,8 +140,10 @@ public partial class PianoKeyboard : Node2D
             float width = (float)key.Width * _bounds.Size.X;
             if (key.IsBlack || key.Pitch % 12 != 0 || width < 20 || _bounds.Size.Y < 30) continue;
             float left = _bounds.Position.X + (float)key.Left * _bounds.Size.X;
-            _labels.DrawString(_labelFont, new Vector2(left + 4, _bounds.End.Y - 12),
-                KeyboardLayout.PitchName(key.Pitch), fontSize: 18, modulate: new Color("56616b"));
+            string text = KeyboardLayout.PitchName(key.Pitch);
+            Vector2 textSize = _labelFont.GetStringSize(text, HorizontalAlignment.Left, -1, 18);
+            _labels.DrawString(_labelFont, new Vector2(left + (width - textSize.X) * 0.5f, _bounds.End.Y - 12),
+                text, fontSize: 18, modulate: new Color("56616b"));
         }
     }
 }

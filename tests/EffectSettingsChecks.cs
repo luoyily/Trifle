@@ -41,7 +41,8 @@ internal static class EffectSettingsChecks
                 Particles = old.Particles with { Enabled = false, Curves = true, CurveEmission = 2.4, CurveGlow = 1.1 },
                 KeyboardLights = old.KeyboardLights with
                 {
-                    KeyboardEnabled = false, HitEnabled = false, KeyLightEnabled = false, NearEnabled = true
+                    KeyboardEnabled = false, HitEnabled = false, KeyLightEnabled = false, NearEnabled = true,
+                    ReleaseDecay = 0.55, ActiveNoteEnabled = true, ActiveNoteStrength = 1.7
                 },
                 ContactLine = old.ContactLine with
                 {
@@ -68,6 +69,13 @@ internal static class EffectSettingsChecks
             Check(Reject(() => new ContactLineSettings { LineColor = "invalid" }.Validate()), "Invalid line color rejected");
             Check(Reject(() => new ContactLineSettings { HaloEmission = double.NaN }.Validate()), "Nonfinite halo intensity rejected");
             Check(Reject(() => new ParticleSettings { CurveGlow = 4 }.Validate()), "Out of range curve glow rejected");
+            var lightDefaults = new KeyboardLightSettings();
+            Check(lightDefaults.ReleaseDecay == 0.22 && !lightDefaults.ActiveNoteEnabled &&
+                lightDefaults.ActiveNoteStrength == 0.8, "New light controls keep backward-compatible defaults");
+            Check(Reject(() => new KeyboardLightSettings { ReleaseDecay = 0 }.Validate()),
+                "Release decay out of range rejected");
+            Check(Reject(() => new KeyboardLightSettings { ActiveNoteStrength = 5 }.Validate()),
+                "Active note strength out of range rejected");
 
             // Released v1 records already have independent switches: only regroup them.
             const string previous = """

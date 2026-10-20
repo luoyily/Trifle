@@ -41,7 +41,7 @@ public partial class NoteRenderer : MultiMeshInstance2D
     }
 
     public void UpdateAt(MidiSong song, KeyboardLayout layout, Rect2 keyboard, double time, double lookAhead,
-        NoteColors colors)
+        NoteColors colors, double activeNoteStrength = 0)
     {
         int count = 0;
         bool hdr = GetViewport().UseHdr2D;
@@ -64,7 +64,13 @@ public partial class NoteRenderer : MultiMeshInstance2D
             Multimesh.SetInstanceTransform2D(count, transform);
             // MultiMesh instance colors are raw shader values, unlike ordinary HDR canvas draw colors.
             Color color = colors.GetColor(note);
-            Multimesh.SetInstanceColor(count, hdr ? color.SrgbToLinear() : color);
+            if (hdr) color = color.SrgbToLinear();
+            if (activeNoteStrength > 0 && note.IsActiveAt(time))
+            {
+                float boost = 1f + (float)activeNoteStrength;
+                color = new Color(color.R * boost, color.G * boost, color.B * boost, color.A);
+            }
+            Multimesh.SetInstanceColor(count, color);
             // Round the original shape, then clip it. The keyboard cut must not become a rounded endpoint.
             Multimesh.SetInstanceCustomData(count, new Color(width, bottom - top, (float)fullHeight, (float)(top - fullTop)));
             count++;
