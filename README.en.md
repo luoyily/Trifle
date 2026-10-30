@@ -23,6 +23,7 @@
 - **Audio support**: attach external audio with an offset, exported as an AAC track
 - **Video export**: 1080p / 1440p / 4K · 24 / 30 / 60 FPS · H.264 / H.265, frame-by-frame rendering
 - **Project management**: save all visual settings as project files, with automatic recovery
+- **MIDI Output**: Works with the Windows 11 MIDI loopback feature to send the currently playing MIDI to a DAW or software instrument for real-time audio playback.
 
 ## Requirements
 
@@ -32,6 +33,7 @@
 
 - **FFmpeg** (video export, background videos): download a **full build** (must include `ffprobe.exe`) from the [official site](https://ffmpeg.org/download.html#build-windows), add it to `PATH`, or enter the full `ffmpeg.exe` path in the export window; background videos require `ffprobe.exe` in the same directory as ffmpeg
 - **MuseScore 4** (score sync): detected automatically, or set manually in the score settings panel
+- **Windows MIDI** (Win11 MIDI Loopback): Download and install `Windows.MIDI.Services.Tools` and `Windows.MIDI.Services.Transports` from the [official GitHub repository](https://github.com/microsoft/MIDI). Open the "MIDI Loopback Setup" tool; the default settings for the "+ New Loopback" option are sufficient. Enable MIDI output within the software and select "Default App Loopback (A)." In your DAW or standalone virtual instrument, set the input/monitoring to "Default App Loopback (B)." When the software plays MIDI, your DAW will receive the corresponding MIDI events. Note: This feature is currently intended only for previewing or use in conjunction with screen recording; audio generated via this function will not be included in the software's built-in video export feature.
 
 ## Build from source
 
