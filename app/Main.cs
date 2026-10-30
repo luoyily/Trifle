@@ -119,6 +119,7 @@ public partial class Main : Control
         _audioPanel.OffsetChanged += SetAudioOffset;
         _settings.Bind(_visualizer);
         InitializeScore();
+        InitializeMidiOut();
         _settingsToggle = GetNode<Button>(ui + "Header/Settings");
         _settingsToggle.Toggled += SetSettingsVisible;
         _settings.LookAheadChanged += SetLookAhead;
@@ -203,9 +204,14 @@ public partial class Main : Control
     public override void _Process(double delta)
     {
         TickAutosave(delta);
-        if (_busy || !_playback.IsPlaying) return;
+        if (_busy || !_playback.IsPlaying)
+        {
+            SynchronizeMidiOut(false);
+            return;
+        }
         _playback.Advance(delta);
         _audio.Synchronize(_playback.TimeSeconds, _playback.IsPlaying, delta);
+        SynchronizeMidiOut(_playback.IsPlaying);
         RefreshPreview();
     }
 
@@ -262,6 +268,7 @@ public partial class Main : Control
         // A newly imported MIDI must not accidentally play the previous song's audio.
         _audio.Configure(preserveAudio ? audioSettings : new AudioSettings(), preserveAudio ? audioStream : null);
         _playback.SetSong(song);
+        _midiOut?.SetEvents(song.ChannelEvents);
         _resumeAfterScrub = false;
         _visualizer.SetSong(song);
         _infoDialog.SetSong(song);
@@ -309,6 +316,7 @@ public partial class Main : Control
         ExternalMidiPath = _externalMidiPath.Length == 0 ? "" : ProjectSettings.GlobalizePath(_externalMidiPath), ScoreSync = _scoreSync,
         Visual = _visualizer.GetSettings(), Export = _exportDialog.GetPreferences(),
         Audio = _audio.Settings,
+        MidiOut = _midiOutSettings,
         TimeSeconds = _playback.TimeSeconds,
         SettingsVisible = _settingsVisible,
         ExpandedSections = _settings.CaptureExpandedSections(),
@@ -498,6 +506,8 @@ public partial class Main : Control
             ProjectStorage.ResolveReference(data.ExternalMidiPath, projectPath);
         _audio.Configure(data.Audio with { Path = audioPath }, audioStream);
         RefreshAudioSettings();
+        ApplyMidiOutSettings(data.MidiOut);
+        _ = RefreshMidiOutPortsAsync();
         _visualizer.ApplySettings(visual);
         RefreshScoreSettings();
         RefreshBackgroundSettings();
@@ -927,7 +937,7 @@ public partial class Main : Control
         if (input is not InputEventKey key || !key.Pressed || key.Echo) return;
         if (_infoDialog.Visible || _exportDialog.Visible || _fileDialog.Visible || _projectMenu.HasOpenDialog() ||
             _quick.HasOpenPopup() || _backgroundPanel.HasOpenPopup() || _notePanel.HasOpenPopup() || _contactLinePanel.HasOpenPopup() ||
-            _previewPanel.HasOpenPopup() || _scorePanel.HasOpenPopup() || _scoreSyncPanel.HasOpenPopup() || (_scoreImportDialog?.Visible ?? false) || (_recoveryDialog?.Visible ?? false) ||
+            _previewPanel.HasOpenPopup() || _scorePanel.HasOpenPopup() || _scoreSyncPanel.HasOpenPopup() || _midiOutPanel.HasOpenPopup() || (_scoreImportDialog?.Visible ?? false) || (_recoveryDialog?.Visible ?? false) ||
             _settings.HasOpenPopup()) return;
         Control focus = GetViewport().GuiGetFocusOwner();
         if (focus is LineEdit or TextEdit && key.Keycode != Key.F10) return;
@@ -1078,6 +1088,8 @@ public partial class Main : Control
         _previewPanel.SetBusy(busy);
         _scorePanel.SetBusy(busy);
         _scoreSyncPanel.SetBusy(busy);
+        _midiOutPanel?.SetBusy(busy);
+        if (busy) SynchronizeMidiOut(false);
         foreach (string path in new[] { "Header/Export", "Transport/Play", "Transport/Stop",
             "Transport/Start", "Transport/FirstNote" })
             GetNode<Button>("Margin/Content/" + path).Disabled = busy;
@@ -1095,6 +1107,8 @@ public partial class Main : Control
     {
         CancelScoreImport();
         _exportCancellation?.Cancel();
+        _midiOut?.Dispose();
+        _midiOut = null;
         GetWindow().FilesDropped -= HandleFilesDropped;
     }
 

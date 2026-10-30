@@ -416,3 +416,18 @@ The original is replaced only after a successful export."
 当前正在发声的音符整条提亮；与近键增亮可同时启用，效果叠加。,Brightens the whole note currently sounding; it can run alongside near-key highlight and stacks.
 恢复激活音符增亮参数,Reset active note highlight
 松键衰减（秒）,Release decay (s)
+MIDI 输出,MIDI output
+启用 MIDI 输出,Enable MIDI output
+输出端口,Output port
+刷新端口,Refresh ports
+（未选择端口）,（No port selected）
+当前没有可用的 MIDI 输出端口。,No MIDI output ports are available.
+未启用,Disabled
+未选择端口,No port selected
+正在连接…,Connecting…
+已连接 · {0},Connected · {0}
+端口不存在，请刷新后重新选择,Port not found; refresh and select it again
+连接已断开；播放时会自动重试,Disconnected; playback retries automatically
+发送到环回 A 端口，DAW 监听同名 B 端口；踏板、弯音与表情等控制器会一并转发。,Send to loopback A and listen to B in the DAW; pedals / pitch bend / expression controllers are forwarded.
+枚举 MIDI 输出端口失败：{0},Failed to enumerate MIDI output ports: {0}
+MIDI 输出失败：{0},MIDI output failed: {0}

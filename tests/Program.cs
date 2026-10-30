@@ -10,6 +10,8 @@ using Trifle.Audio;
 
 if (args.Contains("--effect-settings")) { EffectSettingsChecks.Run(); return; }
 if (args.Contains("--transport")) { TransportChecks.Run(); return; }
+if (args.Contains("--midi-out")) { MidiOutChecks.Run(); return; }
+if (args.Contains("--midi-out-live")) { await MidiOutChecks.RunLiveAsync(); return; }
 if (args.Contains("--score-bundle")) { ScoreBundleChecks.Run(args.LastOrDefault()); return; }
 if (args.Contains("--score-sync")) { ScoreSyncChecks.Run(args.LastOrDefault()); return; }
 if (args.Contains("--score-import")) { await ScoreImportChecks.RunAsync(args.LastOrDefault()); return; }

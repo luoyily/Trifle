@@ -16,4 +16,7 @@ public sealed record MidiSong(
     MidiTempoChange[] TempoChanges, MidiNote[] Notes, double DurationSeconds)
 {
     public MidiBarGrid BarGrid { get; init; }
+
+    // Channel voice messages in song-time order, including controllers the visualizer ignores.
+    public MidiChannelEvent[] ChannelEvents { get; init; } = System.Array.Empty<MidiChannelEvent>();
 }

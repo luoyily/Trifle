@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://app/SettingsPanel.cs" id="1"]
 [ext_resource type="PackedScene" path="res://app/audio_panel.tscn" id="2_audio"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://app/contact_line_panel.tscn" id="9_line"]
 [ext_resource type="PackedScene" path="res://app/glow_panel.tscn" id="10_glow"]
 [ext_resource type="PackedScene" path="res://app/score_panel.tscn" id="11_score"]
+[ext_resource type="PackedScene" path="res://app/midi_out_panel.tscn" id="12_midiout"]
 
 [node name="SettingsPanel" type="PanelContainer"]
 custom_minimum_size = Vector2(380, 0)
@@ -60,6 +61,9 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
 [node name="AudioPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("2_audio")]
+layout_mode = 2
+
+[node name="MidiOutPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("12_midiout")]
 layout_mode = 2
 
 [node name="BackgroundPanel" parent="Margin/Content/Scroll/Groups" instance=ExtResource("3_background")]

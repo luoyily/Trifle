@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Trifle.Export;
 using Trifle.Visuals;
 using Trifle.Audio;
+using Trifle.Midi;
 
 namespace Trifle.Persistence;
 
@@ -18,6 +19,7 @@ public sealed record ProjectData
     public VisualSettings Visual { get; init; } = new();
     public ExportPreferences Export { get; init; } = new();
     public AudioSettings Audio { get; init; } = new();
+    public MidiOutSettings MidiOut { get; init; } = new();
     public double TimeSeconds { get; init; }
     public bool SettingsVisible { get; init; } = true;
     public System.Collections.Generic.Dictionary<string, bool> ExpandedSections { get; init; } = new();
@@ -30,11 +32,12 @@ public sealed record ProjectData
         if (ScorePath == null) throw new ArgumentException("乐谱引用不能为空值。");
         if (ExternalMidiPath == null || ScoreSync == null) throw new ArgumentException("乐谱同步参数不能为空值。");
         ScoreSync.Validate();
-        if (Visual == null || Export == null || Audio == null) throw new ArgumentException("项目参数不能为空值。");
+        if (Visual == null || Export == null || Audio == null || MidiOut == null) throw new ArgumentException("项目参数不能为空值。");
         if (ExpandedSections == null) throw new ArgumentException("侧栏折叠状态不能为空值。");
         Visual.Validate();
         Export.Validate();
         Audio.Validate();
+        MidiOut.Validate();
         if (Preview == null) throw new ArgumentException("预览参数不能为空值。");
         Preview.Validate();
         if (!double.IsFinite(TimeSeconds) || TimeSeconds < 0) throw new ArgumentException("播放位置无效。");
