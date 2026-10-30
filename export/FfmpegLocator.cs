@@ -1,54 +1,41 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trifle.Video;
 
 namespace Trifle.Export;
 
 // Path is what goes into the text box; Resolved is the absolute location when known.
-public sealed record FfmpegProbe(string Path, string Resolved, string Version, bool Found);
+// Ffprobe is only usable when it sits next to Resolved: the background video probes its
+// metadata there, so a lone ffmpeg.exe counts as usable for export but incomplete overall.
+public sealed record FfmpegProbe(string Path, string Resolved, string Version, bool Found,
+    string Ffprobe = "", bool FfprobeFound = false);
 
-// Finds a usable ffmpeg without blocking the UI: a candidate only counts once it answers
-// -version within a few seconds, so a stale path or a half-installed binary is skipped.
+// Finds a usable ffmpeg without blocking the UI: PATH and an explicitly chosen file are the
+// only sources, and a candidate only counts once it answers -version within a few seconds.
+// A bare name is resolved to the absolute location PATH would pick, so ffprobe is looked up
+// next to the exact binary that will run — never through a second, independent PATH search.
 public static class FfmpegLocator
 {
-    public static readonly string BundledPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+    public const string DefaultName = "ffmpeg";
 
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
 
-    private static readonly string[] InstallRoots =
-    {
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            @"Microsoft\WinGet\Links\ffmpeg.exe"),
-        @"C:\Program Files\FFmpeg\bin\ffmpeg.exe",
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @"scoop\shims\ffmpeg.exe"),
-        @"C:\ProgramData\chocolatey\bin\ffmpeg.exe",
-        @"C:\ffmpeg\bin\ffmpeg.exe",
-    };
-
-    // The configured value is tried first and kept when it works — a bare "ffmpeg" resolved
-    // through PATH must not be rewritten. Bundled and common install roots follow as fallbacks.
+    // The configured value is tried as-is — a bare "ffmpeg" resolved through PATH must not be
+    // rewritten. Resolved stays empty for an explicit path, which is already absolute.
     public static async Task<FfmpegProbe> DetectAsync(string current, CancellationToken token = default)
     {
-        string requested = current?.Trim() ?? "";
-        string requestedResolved = requested.Length > 0 && Path.GetDirectoryName(requested).Length == 0
-            ? await WhereAsync(requested, token).ConfigureAwait(false) : "";
-        IEnumerable<string> candidates = new[] { requested }.Where(path => path.Length > 0)
-            .Concat(new[] { BundledPath }).Concat(InstallRoots)
-            .Distinct(StringComparer.OrdinalIgnoreCase);
-
-        foreach (string candidate in candidates)
-        {
-            string resolved = string.Equals(candidate, requested, StringComparison.OrdinalIgnoreCase)
-                ? requestedResolved : "";
-            var probe = await ProbeAsync(candidate, resolved, token).ConfigureAwait(false);
-            if (probe.Found) return probe;
-        }
-        return new FfmpegProbe(requested, "", "", false);
+        string requested = string.IsNullOrWhiteSpace(current) ? DefaultName : current.Trim();
+        bool bare = Path.GetDirectoryName(requested).Length == 0;
+        string resolved = bare ? await WhereAsync(requested, token).ConfigureAwait(false) : "";
+        var probe = await ProbeAsync(requested, resolved, token).ConfigureAwait(false);
+        if (!probe.Found) return probe;
+        string ffprobe = VideoMetadata.ProbeExecutable(probe.Resolved.Length > 0 ? probe.Resolved : requested);
+        var ffprobeProbe = await ProbeAsync(ffprobe, ffprobe, token).ConfigureAwait(false);
+        return probe with { Ffprobe = ffprobe, FfprobeFound = ffprobeProbe.Found };
     }
 
     public static async Task<FfmpegProbe> ProbeAsync(string candidate, string resolved = "", CancellationToken token = default)

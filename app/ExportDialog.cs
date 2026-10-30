@@ -19,7 +19,22 @@ public partial class ExportDialog : Window
     {
         _ffmpeg.Text = path;
         FfmpegPathChanged?.Invoke();
+        DetectInBackground();
     }
+
+    // The absolute ffmpeg path downstream consumers (export, background video) should run; the
+    // raw text is a fallback while detection has not caught up with a fresh edit. An empty box
+    // means the PATH default, matching FfmpegLocator.DetectAsync.
+    public string ResolvedFfmpeg()
+    {
+        string text = _ffmpeg.Text.Trim();
+        if (text.Length == 0) text = FfmpegLocator.DefaultName;
+        return _probe.Found && string.Equals(_probe.Path, text, StringComparison.OrdinalIgnoreCase)
+            ? _probe.Resolved : text;
+    }
+
+    // Re-probes the current text without blocking; used at startup and whenever code rewrites the box.
+    public void DetectInBackground() { if (!_busy) _ = RunDetectionAsync(); }
     private LineEdit _path;
     private LineEdit _ffmpeg;
     private Button _ffmpegBrowse;
@@ -39,6 +54,8 @@ public partial class ExportDialog : Window
     private bool _fullDuration = true;
     private bool _syncingRange;
     private ExportSettings _pending;
+    private string _pendingFfmpeg = "";
+    private FfmpegProbe _probe = new(FfmpegLocator.DefaultName, "", "", false);
     private AudioSettings _audio = new();
     private string _contents = "MIDI 音符 · 键盘 · 纯色背景";
     private string _assetWarning = "";
@@ -112,7 +129,7 @@ public partial class ExportDialog : Window
         _cancel.Pressed += () => CancelRequested?.Invoke();
         GetNode<Button>(ui + "Actions/Close").Pressed += TryClose;
         CloseRequested += TryClose;
-        _overwrite.Confirmed += () => ExportRequested?.Invoke(_pending with { Overwrite = true }, _ffmpeg.Text.Trim());
+        _overwrite.Confirmed += () => ExportRequested?.Invoke(_pending with { Overwrite = true }, _pendingFfmpeg);
     }
 
     public void ResetForSong(MidiSong song)
@@ -160,6 +177,7 @@ public partial class ExportDialog : Window
         _fps.Select(Array.IndexOf(Rates, preferences.FramesPerSecond));
         ApplyEncoding(preferences.Encoding);
         FfmpegPathChanged?.Invoke();
+        DetectInBackground();
     }
 
     private EncodingSettings GetEncoding() => new()
@@ -186,33 +204,29 @@ public partial class ExportDialog : Window
         _message.TooltipText = _audio.Path + (_assetDetails.Length > 0 ? "\n" + _assetDetails : "");
         _progress.Value = 0;
         PopupCentered();
-        if (!_busy) _ = RunDetectionAsync(fill: true);
+        if (!_busy) _ = RunDetectionAsync();
     }
 
-    // Re-checks the current text after every edit; on failure the download hint shows and on
-    // success the tooltip reports the resolved location and version.
     private void FfmpegEdited()
     {
         FfmpegPathChanged?.Invoke();
-        if (!_busy) _ = RunDetectionAsync(fill: false);
+        DetectInBackground();
     }
 
-    private async Task RunDetectionAsync(bool fill)
+    // Re-checks the current text after every edit; the tooltip reports the resolved location and
+    // version, and the hint appears when ffmpeg or its sibling ffprobe is unusable.
+    private async Task RunDetectionAsync()
     {
         int generation = ++_ffmpegDetection;
-        string requested = _ffmpeg.Text.Trim();
-        var probe = await FfmpegLocator.DetectAsync(requested);
+        var probe = await FfmpegLocator.DetectAsync(_ffmpeg.Text);
         if (generation != _ffmpegDetection || !IsInsideTree()) return;
-        // Filling only happens for a probe of the untouched text, so typing is never clobbered.
-        if (probe.Found && fill && !string.Equals(probe.Path, requested, StringComparison.OrdinalIgnoreCase))
-        {
-            _ffmpeg.Text = probe.Path;
-            FfmpegPathChanged?.Invoke();
-        }
-        _ffmpeg.TooltipText = probe.Found
-            ? AppLocale.T("已找到：") + probe.Resolved + (probe.Version.Length > 0 ? "\n" + probe.Version : "")
-            : AppLocale.T("未找到可用的 FFmpeg，请见下方提示。");
-        _ffmpegHint.Visible = !probe.Found;
+        _probe = probe;
+        _ffmpeg.TooltipText = !probe.Found ? AppLocale.T("未找到可用的 FFmpeg，请见下方提示。")
+            : !probe.FfprobeFound ? AppLocale.T("已找到：") + probe.Resolved + "\n" +
+                AppLocale.T("缺少可用的 ffprobe，背景视频功能不可用，请见下方提示。")
+            : AppLocale.T("已找到：") + probe.Resolved + (probe.Version.Length > 0 ? "\n" + probe.Version : "");
+        _ffmpegHint.Visible = !probe.Found || !probe.FfprobeFound;
+        FfmpegPathChanged?.Invoke();
     }
 
     public void SetAudio(AudioSettings settings)
@@ -250,10 +264,11 @@ public partial class ExportDialog : Window
             if (File.Exists(settings.OutputPath))
             {
                 _pending = settings;
+                _pendingFfmpeg = ResolvedFfmpeg();
                 _overwrite.DialogText = string.Format(AppLocale.T("覆盖这个视频文件？\n{0}\n导出成功后才替换原文件。"), settings.OutputPath);
                 _overwrite.PopupCentered();
             }
-            else ExportRequested?.Invoke(settings, _ffmpeg.Text.Trim());
+            else ExportRequested?.Invoke(settings, ResolvedFfmpeg());
         }
         catch (Exception error) { Finish(string.Format(AppLocale.T("设置无效：{0}"), error.Message)); }
     }

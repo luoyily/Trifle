@@ -32,7 +32,7 @@
 
 ## 可选依赖
 
-- **FFmpeg**（视频导出、背景视频）：从[官网](https://ffmpeg.org/download.html#build-windows)下载，添加至 PATH 环境变量，或放置 `ffmpeg.exe` 到程序同目录即可
+- **FFmpeg**（视频导出、背景视频）：从[官网](https://ffmpeg.org/download.html#build-windows)下载**完整版**（需包含 `ffprobe.exe`），添加至 PATH 环境变量，或在导出窗口中填写 `ffmpeg.exe` 完整路径；背景视频要求 `ffprobe.exe` 与 ffmpeg 位于同一目录
 - **MuseScore 4**（乐谱同步）：程序会自动探测安装位置，也可在乐谱设置面板手动指定
 
 ## 从源码构建

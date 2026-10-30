@@ -342,6 +342,7 @@ Restores paused; saved projects are not overwritten."
 粒子 / 流线,Particles / streams
 粒子与流线,Particles & streams
 纯色背景,solid background
+缺少可用的 ffprobe，背景视频功能不可用，请见下方提示。,ffprobe is missing or unusable next to it; background video is unavailable. See the hint below.
 背景图片不可用，将使用背景色。,Background image unavailable; the background color will be used.
 背景源文件不可用，将使用已加载的图片。,The background source file is unavailable; the loaded image will be used.
 背景色（图片不可用）,background color (image unavailable)

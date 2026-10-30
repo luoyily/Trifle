@@ -31,7 +31,7 @@ public partial class Main
             ApplyVideoSettings(_visualizer.Background.Video with { Path = path });
             _visualizer.SetBackground(_visualizer.Background with { Type = BackgroundType.Video }, allowFallback: true);
             RefreshBackgroundSettings();
-            _videoBackground.Configure(_visualizer.Background, _exportDialog.FfmpegPath, _playback.TimeSeconds, reload: true);
+            _videoBackground.Configure(_visualizer.Background, _exportDialog.ResolvedFfmpeg(), _playback.TimeSeconds, reload: true);
             _settings.CollapseSection("BackgroundPanel");
             SetStatus(string.Format(AppLocale.T("已选择背景视频：{0}"), Path.GetFileName(path)));
             return true;

@@ -30,7 +30,7 @@
 
 ## Optional dependencies
 
-- **FFmpeg** (video export, background videos): download it from the [official site](https://ffmpeg.org/download.html#build-windows), add it to `PATH`, or place `ffmpeg.exe` next to the program
+- **FFmpeg** (video export, background videos): download a **full build** (must include `ffprobe.exe`) from the [official site](https://ffmpeg.org/download.html#build-windows), add it to `PATH`, or enter the full `ffmpeg.exe` path in the export window; background videos require `ffprobe.exe` in the same directory as ffmpeg
 - **MuseScore 4** (score sync): detected automatically, or set manually in the score settings panel
 
 ## Build from source

@@ -169,6 +169,7 @@ public partial class Main : Control
         _exportDialog = GetNode<ExportDialog>("ExportDialog");
         _aboutDialog = GetNode<AboutDialog>("AboutDialog");
         _exportDialog.FfmpegPathChanged += RefreshBackgroundSettings;
+        _exportDialog.DetectInBackground();
         GetNode<Button>(ui + "Header/Info").Pressed += () => _infoDialog.PopupCentered();
         GetNode<Button>(ui + "Header/Export").Pressed += () =>
         {
@@ -835,7 +836,7 @@ public partial class Main : Control
 
     private void RefreshBackgroundSettings()
     {
-        _videoBackground.Configure(_visualizer.Background, _exportDialog?.FfmpegPath ?? "ffmpeg", _playback.TimeSeconds);
+        _videoBackground.Configure(_visualizer.Background, _exportDialog?.ResolvedFfmpeg() ?? FfmpegLocator.DefaultName, _playback.TimeSeconds);
         RefreshVideoStatus();
     }
     private string BackgroundNotice() => _visualizer.Background.Type == BackgroundType.Video &&
