@@ -126,7 +126,7 @@ func run():
 	settings.get_node("Margin/Content/Scroll/Groups/AudioPanel/Header").button_pressed = true
 	controls.get_node("Header").button_pressed = true
 	await settled()
-	check(controls.get_node("Fields/Content/Source/Label").global_position.x > settings.get_node("Margin/Content/Scroll/Groups/AudioPanel/Fields/Content/Offset/Label").global_position.x, "Synchronization fields retain the nested sidebar indentation")
+	check(controls.get_node("Fields/Content/Source/Label").global_position.x > settings.get_node("Margin/Content/Scroll/Groups/AudioPanel/Fields/Content/AudioSync/Header").global_position.x, "Synchronization fields retain the nested sidebar indentation")
 	root.get_texture().get_image().save_png(directory + "synchronization_ui.png")
 	print("Synchronization UI screenshot: ", directory + "synchronization_ui.png")
 	main.queue_free(); await process_frame

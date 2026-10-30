@@ -117,8 +117,10 @@ public partial class SettingsPanel : PanelContainer
 
     public void RestoreExpandedSections(System.Collections.Generic.Dictionary<string, bool> expanded)
     {
+        // Sections added after a project was saved keep their scene default instead of
+        // being forced closed by a missing key.
         foreach (var button in FoldButtons(this))
-            button.ButtonPressed = expanded.TryGetValue(SectionKey(button), out bool open) && open;
+            if (expanded.TryGetValue(SectionKey(button), out bool open)) button.ButtonPressed = open;
     }
 
     public void CollapseSection(string name) => GetNode<Button>(Groups + name + "/Header").ButtonPressed = false;

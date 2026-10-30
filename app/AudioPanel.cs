@@ -16,8 +16,10 @@ public partial class AudioPanel : VBoxContainer
     public override void _Ready()
     {
         SectionHeading.Bind(GetNode<Button>("Header"), GetNode<Control>("Fields"), "时间与同步");
-        _enabled = GetNode<CheckButton>("Fields/Content/Enabled");
-        _offset = GetNode<SpinBox>("Fields/Content/Offset/Value");
+        SectionHeading.Bind(GetNode<Button>("Fields/Content/AudioSync/Header"),
+            GetNode<Control>("Fields/Content/AudioSync/Fields"), "音频同步");
+        _enabled = GetNode<CheckButton>("Fields/Content/AudioSync/Fields/Content/Enabled");
+        _offset = GetNode<SpinBox>("Fields/Content/AudioSync/Fields/Content/Offset/Value");
         _enabled.Toggled += v => { if (!_busy) EnabledChanged?.Invoke(v); };
         _offset.ValueChanged += v => { if (!_busy) OffsetChanged?.Invoke(v); };
         Refresh(new AudioSettings(), 0);

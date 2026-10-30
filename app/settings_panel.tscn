@@ -346,9 +346,9 @@ theme_override_constants/separation = 8
 [node name="Label" type="Label" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/LookAhead"]
 layout_mode = 2
 size_flags_horizontal = 0
-text = "下落提前量（秒）"
+text = "同屏音符时长（秒）"
 theme_type_variation = &"MutedLabel"
-custom_minimum_size = Vector2(108, 0)
+custom_minimum_size = Vector2(152, 0)
 autowrap_mode = 3
 
 [node name="Slider" type="HSlider" parent="Margin/Content/Scroll/Groups/Notes/Fields/Content/LookAhead"]

@@ -14,7 +14,7 @@ MIDI 音符,MIDI notes
 上一行,Previous row
 上升速度（像素/秒）,Rise speed (px/s)
 下一行,Next row
-下落提前量（秒）,Fall lead time (s)
+同屏音符时长（秒）,On-screen duration (s)
 不透明度（%）,Opacity (%)
 两者共享波动和触键响应。关闭染色后保持自定义颜色，仍随触键增亮和波动。,Both share the wobble and key-press response. With note tinting off they keep custom colors and still brighten and wobble on key presses.
 为画面中较亮的效果添加光晕，影响所有发光效果。,Adds a halo to brighter effects on screen; affects every glow.
@@ -105,6 +105,7 @@ MIDI 音符,MIDI notes
 数值越低，画质越高，文件通常越大。不同编码器的相同 CRF 不代表相同画质。,Lower values mean higher quality and usually larger files. The same CRF is not the same quality across encoders.
 整行亮度,Full-row brightness
 时间与同步,Timing & sync
+音频同步,Audio sync
 时间偏移（秒）,Time offset (s)
 显示 / 隐藏右侧设置栏,Show / hide the settings sidebar
 显示乐谱,Show score
