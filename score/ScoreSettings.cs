@@ -3,9 +3,16 @@ using Trifle.Visuals;
 
 namespace Trifle.Score;
 
+public enum ScoreDisplayEffect
+{
+    CursorLine,
+    Typewriter
+}
+
 public sealed record ScoreSettings
 {
     public bool Enabled { get; init; } = true;
+    public ScoreDisplayEffect DisplayEffect { get; init; } = ScoreDisplayEffect.CursorLine;
     public double Width { get; init; } = 1;
     public double Y { get; init; } = 0.07;
     public bool RemoveBackground { get; init; }
@@ -16,6 +23,8 @@ public sealed record ScoreSettings
 
     public void Validate()
     {
+        if (DisplayEffect is not ScoreDisplayEffect.CursorLine and not ScoreDisplayEffect.Typewriter)
+            throw new ArgumentException("未知的乐谱显示效果。");
         if (!double.IsFinite(Width) || Width < 0.3 || Width > 1 ||
             !double.IsFinite(Y) || Y < 0 || Y > 0.55)
             throw new ArgumentException("乐谱宽度需要为 30–100%，垂直位置需要为 0–55%。");

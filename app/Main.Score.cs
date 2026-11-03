@@ -110,6 +110,12 @@ public partial class Main
         ApplyScoreSettings(_visualizer.Score.Settings with { Brightness = brightness,
             CursorColor = cursorColor.ToHtml(), CursorBrightness = cursorBrightness });
 
+    public void SetScoreDisplayEffect(int effect)
+    {
+        if (effect != (int)ScoreDisplayEffect.CursorLine && effect != (int)ScoreDisplayEffect.Typewriter) return;
+        ApplyScoreSettings(_visualizer.Score.Settings with { DisplayEffect = (ScoreDisplayEffect)effect });
+    }
+
     public bool SetScoreMidiSource(bool fromScore)
     {
         if (_busy || _visualizer.Score.Bundle == null) return false;
@@ -182,11 +188,15 @@ public partial class Main
         {
             ["path"] = _scorePath, ["available"] = score.Bundle != null, ["error"] = _scoreError,
             ["midi_from_score"] = _midiFromScore, ["enabled"] = score.Settings.Enabled,
+            ["display_effect"] = score.Settings.DisplayEffect.ToString(),
+            ["reveal_x"] = score.RevealX, ["cursor_visible"] = score.CursorVisible,
             ["external_midi_path"] = _externalMidiPath, ["measure_offset"] = _scoreSync.MeasureOffset,
             ["timeline_duration"] = score.Timeline?.DurationSeconds ?? 0,
             ["visible"] = score.Bundle != null && score.IsVisibleInTree(), ["title"] = score.Bundle?.Title ?? "",
             ["rows"] = score.Bundle?.Rows.Length ?? 0, ["events"] = score.Bundle?.Events.Length ?? 0,
             ["row"] = score.Cursor?.Row ?? -1, ["page"] = score.Bundle == null ? -1 : score.Bundle.Rows[score.Cursor.Row].Page,
+            ["crop_top"] = score.Bundle == null || score.Cursor == null ? 0 : score.Bundle.Rows[score.Cursor.Row].CropTop,
+            ["crop_height"] = score.Bundle == null || score.Cursor == null ? 0 : score.Bundle.Rows[score.Cursor.Row].CropHeight,
             ["cursor_x"] = score.Cursor?.X ?? 0, ["time"] = _playback.TimeSeconds,
             ["width"] = score.Settings.Width, ["y"] = score.Settings.Y,
             ["remove_background"] = score.Settings.RemoveBackground, ["main_color"] = score.Settings.MainColor,

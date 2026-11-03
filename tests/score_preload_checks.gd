@@ -35,7 +35,9 @@ func ready():
 
 func legacy_alpha() -> PackedByteArray:
 	# Same synthetic first-system crop and opaque white theme, using the old pipeline.
-	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="10000" height="1900" viewBox="0 1650 10000 1900"><g fill="#ffffff">'
+	var info := state()
+	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="10000" height="%s" viewBox="0 %s 10000 %s"><g fill="#ffffff">' % [
+		info["crop_height"], info["crop_top"], info["crop_height"]]
 	for local in 3:
 		var top := 2000 + local * 3000
 		svg += '<path class="Note" d="M2000,%d C1750,%d 2450,%d 2600,%d Z"/><path stroke="#ffffff" fill="none" stroke-width="14" d="M1800,%d L8600,%d"/>' % [top + 500, top, top, top + 350, top + 750, top + 750]

@@ -133,60 +133,61 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Cursor" type="VBoxContainer" parent="Fields/Content"]
+[node name="Effect" type="HBoxContainer" parent="Fields/Content"]
 layout_mode = 2
-theme_override_constants/separation = 8
 
-[node name="Header" type="Button" parent="Fields/Content/Cursor"]
+[node name="Label" type="Label" parent="Fields/Content/Effect"]
 layout_mode = 2
-text = "光标线"
-toggle_mode = true
-alignment = 0
-theme_type_variation = &"SubsectionHeader"
+size_flags_horizontal = 3
+text = "显示效果"
 
-[node name="Fields" type="MarginContainer" parent="Fields/Content/Cursor"]
-visible = false
+[node name="Value" type="OptionButton" parent="Fields/Content/Effect"]
+layout_mode = 2
+custom_minimum_size = Vector2(130, 32)
+fit_to_longest_item = false
+
+[node name="CursorFields" type="MarginContainer" parent="Fields/Content"]
 layout_mode = 2
 theme_type_variation = &"SectionFields"
 
-[node name="Content" type="VBoxContainer" parent="Fields/Content/Cursor/Fields"]
+[node name="Content" type="VBoxContainer" parent="Fields/Content/CursorFields"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Color" type="HBoxContainer" parent="Fields/Content/Cursor/Fields/Content"]
+[node name="Color" type="HBoxContainer" parent="Fields/Content/CursorFields/Content"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Fields/Content/Cursor/Fields/Content/Color"]
+[node name="Label" type="Label" parent="Fields/Content/CursorFields/Content/Color"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "颜色"
 theme_type_variation = &"MutedLabel"
 
-[node name="Value" type="ColorPickerButton" parent="Fields/Content/Cursor/Fields/Content/Color"]
+[node name="Value" type="ColorPickerButton" parent="Fields/Content/CursorFields/Content/Color"]
 layout_mode = 2
 custom_minimum_size = Vector2(100, 32)
 edit_alpha = false
 color = Color(0, 0.658824, 0.811765, 1)
 
-[node name="Brightness" type="HBoxContainer" parent="Fields/Content/Cursor/Fields/Content"]
+[node name="Brightness" type="HBoxContainer" parent="Fields/Content/CursorFields/Content"]
 layout_mode = 2
 script = ExtResource("parameter")
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="Fields/Content/Cursor/Fields/Content/Brightness"]
+[node name="Label" type="Label" parent="Fields/Content/CursorFields/Content/Brightness"]
 layout_mode = 2
 text = "亮度"
 custom_minimum_size = Vector2(108, 0)
 theme_type_variation = &"MutedLabel"
 
-[node name="Slider" type="HSlider" parent="Fields/Content/Cursor/Fields/Content/Brightness"]
+[node name="Slider" type="HSlider" parent="Fields/Content/CursorFields/Content/Brightness"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 custom_minimum_size = Vector2(54, 32)
 scrollable = false
 
-[node name="Value" type="SpinBox" parent="Fields/Content/Cursor/Fields/Content/Brightness"]
+[node name="Value" type="SpinBox" parent="Fields/Content/CursorFields/Content/Brightness"]
 layout_mode = 2
 custom_minimum_size = Vector2(86, 32)
 max_value = 5
@@ -195,10 +196,17 @@ value = 1
 alignment = 2
 select_all_on_focus = true
 
-[node name="Help" type="Label" parent="Fields/Content/Cursor/Fields/Content"]
+[node name="Help" type="Label" parent="Fields/Content/CursorFields/Content"]
 layout_mode = 2
 autowrap_mode = 3
 text = "发声点到达时增亮，随后衰减回基础亮度。乐谱和光标参与全局泛光。"
+theme_type_variation = &"HelpLabel"
+
+[node name="TypewriterHelp" type="Label" parent="Fields/Content"]
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = "播放到当前位置时，该位置及之前的音符出现；光标线隐藏。谱线、谱号、调号、小节线和小节号保持显示。"
 theme_type_variation = &"HelpLabel"
 
 

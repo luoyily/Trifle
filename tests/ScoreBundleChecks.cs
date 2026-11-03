@@ -102,6 +102,86 @@ internal static class ScoreBundleChecks
         var annotated = XDocument.Parse(annotations.SvgForRow(0)).Root;
         Check(annotated.Elements().Count(e => e.Attribute("class")?.Value == "Tempo") == 1 &&
             !annotated.Elements().Any(e => e.Attribute("class")?.Value == "Text"), "System keeps its tempo and excludes adjacent tempo and page-frame text");
+        const string revealPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,500 1000,500"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,520 1000,520"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,540 1000,540"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,560 1000,560"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,580 1000,580"/>
+              <path class="Clef" fill="#000000" d="M50,500 L70,580 L60,540 Z"/>
+              <path class="BarLine" fill="#000000" d="M400,500 L402,580 L400,580 Z"/>
+              <path class="MeasureNumber" fill="#000000" d="M410,470 L430,470 L430,490 Z"/>
+              <path class="Note" fill="#000000" d="M180,540 L220,540 L220,580 L180,580 Z"/>
+              <path class="Note" fill="#000000" d="M580,540 L620,540 L620,580 L580,580 Z"/>
+              <path class="Articulation" fill="#000000" d="M590,500 L610,510 L590,520 Z"/>
+              <path class="Beam" fill="#000000" d="M150,560 L650,560 L650,565 L150,565 Z"/>
+            </svg>
+            """;
+        var revealBundle = MuseScoreBundle.Parse(Bundle(page: revealPage));
+        var reveal = revealBundle.RevealForRow(0);
+        Check(reveal.Positions.SequenceEqual(new[] { 200.0, 600.0 }), "Reveal positions deduplicate repeated onsets");
+        Check(revealBundle.RevealIndex(0, 199) == -1 && revealBundle.RevealIndex(0, 200) == 0 &&
+            revealBundle.RevealIndex(0, 599) == 0 && revealBundle.RevealIndex(0, 600) == 1,
+            "Reveal positions follow onset x");
+        Near(revealBundle.RevealX(0, -1), revealBundle.Rows[0].Left - 1, "Empty typewriter row starts before the staff");
+        Near(revealBundle.RevealX(0, 0), 400, "Reveal boundary splits the gap before the next articulation");
+        Check(revealBundle.RevealX(0, 1) > revealBundle.Rows[0].Right, "The final position reveals the system tail");
+        const string splitPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,500 800,500"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,540 800,540"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,580 800,580"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,620 800,620"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,660 800,660"/>
+              <path class="Note" fill="#000000" d="M200,540 L300,540 L300,580 L200,580 Z"/>
+              <path class="Note" fill="#000000" d="M400,540 L500,540 L500,580 L400,580 Z"/>
+              <path class="TieSegment" fill="#000000" d="M250,520 L350,520 L350,530 L250,530 Z"/>
+            </svg>
+            """;
+        const string splitMpos = """
+            <score><elements>
+              <element id="0" page="0" x="1200" y="6000" sx="8400" sy="2400"/>
+            </elements></score>
+            """;
+        const string splitSpos = """
+            <score><elements>
+              <element id="10" page="0" x="2400" y="6000" sx="1200" sy="2400"/>
+              <element id="20" page="0" x="4800" y="6000" sx="1200" sy="2400"/>
+            </elements><events>
+              <event elid="10" position="0"/><event elid="20" position="1000"/>
+            </events></score>
+            """;
+        var splitBundle = MuseScoreBundle.Parse(Bundle(segments: splitSpos, measures: splitMpos, page: splitPage));
+        Near(splitBundle.RevealX(0, 0), 350,
+            "A connector overlapping a notehead yields the gap between the noteheads");
+        const string closeNotesPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,500 800,500"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,540 800,540"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,580 800,580"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,620 800,620"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,660 800,660"/>
+              <path class="Note" fill="#000000" d="M200,540 L300,540 L300,580 L200,580 Z"/>
+              <path class="Note" fill="#000000" d="M280,540 L380,540 L380,580 L280,580 Z"/>
+            </svg>
+            """;
+        var closeNotes = MuseScoreBundle.Parse(Bundle(page: closeNotesPage, segments: splitSpos, measures: splitMpos));
+        Near(closeNotes.RevealX(0, 0), 381,
+            "Overlapping noteheads reveal both chords instead of cutting a small sliver");
+        var grid = XDocument.Parse(revealBundle.SvgForRow(0, true, null, ScoreLayer.Grid)).Root;
+        Check(grid.Descendants().Any(e => e.Attribute("class")?.Value == "StaffLines") &&
+            grid.Descendants().Any(e => e.Attribute("class")?.Value == "Clef") &&
+            !grid.Descendants().Any(e => e.Attribute("class")?.Value is "Note" or "Articulation" or "Beam"),
+            "Grid layer keeps staff and clef but removes notation");
+        var notation = XDocument.Parse(revealBundle.SvgForRow(0, true, null, ScoreLayer.Notation)).Root;
+        Check(notation.Descendants().Any(e => e.Attribute("class")?.Value == "Note") &&
+            notation.Descendants().Any(e => e.Attribute("class")?.Value == "Beam") &&
+            !notation.Descendants().Any(e => e.Attribute("class")?.Value is "StaffLines" or "Clef" or "BarLine" or "MeasureNumber"),
+            "Notation layer keeps notes, beams and articulations but removes the grid");
         const string overlapPage = """
             <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
               <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
@@ -211,6 +291,8 @@ internal static class ScoreBundleChecks
         Near(double.Parse(translucent.Elements().Single().Attribute("opacity").Value, System.Globalization.CultureInfo.InvariantCulture), 128 / 255.0, "Theme alpha applies to the complete notation group");
         Reject(() => bundle.SvgForRow(0, true, "invalid"), "Malformed notation color is rejected");
         new ScoreSettings().Validate();
+        Check(new ScoreSettings().DisplayEffect == ScoreDisplayEffect.CursorLine, "Cursor line remains the default display effect");
+        Reject(() => new ScoreSettings { DisplayEffect = (ScoreDisplayEffect)99 }.Validate(), "Unknown score display effect is rejected");
         Near(ScorePulse.Gain(0), 2.5, "Onset cursor pulse peaks at a fixed gain");
         Near(ScorePulse.Gain(0.25), 1.375, "Cursor pulse decays using song time");
         Near(ScorePulse.Gain(0.5), 1, "Cursor pulse returns exactly to its base brightness after 0.5s");
@@ -227,8 +309,9 @@ internal static class ScoreBundleChecks
         {
             string documentPath = Path.Combine(storage, "piece.trifle.json");
             string scorePath = Path.Combine(storage, "scores", "piece.json");
-            var style = new ScoreSettings { Width = 0.85, Y = 0.12, RemoveBackground = true, MainColor = "55aaffff",
-                Brightness = 2.5, CursorColor = "ff8899ff", CursorBrightness = 1.4 };
+            var style = new ScoreSettings { DisplayEffect = ScoreDisplayEffect.Typewriter, Width = 0.85, Y = 0.12,
+                RemoveBackground = true, MainColor = "55aaffff", Brightness = 2.5, CursorColor = "ff8899ff",
+                CursorBrightness = 1.4 };
             var data = new ProjectData { MidiPath = scorePath, MidiFromScore = true, ScorePath = scorePath, Visual = new VisualSettings { Score = style }, TimeSeconds = 13.5 };
             ProjectStorage.SaveProject(documentPath, data);
             var stored = ProjectStorage.LoadProject(documentPath);
@@ -274,6 +357,12 @@ internal static class ScoreBundleChecks
                 if (sample.CursorAt(start.Seconds).Row != row) throw new Exception("Real sample system mismatch: " + row);
             }
             Check(true, "All 12 real system boundaries locate the correct row");
+            var sampleReveal = sample.RevealForRow(5);
+            int next = Array.FindIndex(sampleReveal.Positions, x => x > 3500 && x < 3510);
+            Check(next > 0, "Real sample keeps the reported row-five onset");
+            double boundary = sample.RevealX(5, next - 1);
+            Check(boundary > sampleReveal.Positions[next - 1] && boundary < 3500,
+                "Real sample stops before the next chord's above-note articulation");
             Console.WriteLine($"Sample: {song.Notes.Length} MIDI notes, {clock.DurationSeconds}s.");
         }
         Console.WriteLine($"Score bundle: {checks} checks passed.");

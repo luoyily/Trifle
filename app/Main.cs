@@ -566,6 +566,7 @@ public partial class Main : Control
     {
         if (_busy || _song == null) return;
         _playback.Seek(seconds);
+        _visualizer.Score.ResetReveal();
         SynchronizeAudio(force: true);
         ClearHits();
         RefreshPreview();
@@ -575,7 +576,11 @@ public partial class Main : Control
     public void PlayPlayback()
     {
         if (_busy || _song == null) return;
-        if (_playback.TimeSeconds >= _playback.DurationSeconds) ClearHits();
+        if (_playback.TimeSeconds >= _playback.DurationSeconds)
+        {
+            ClearHits();
+            _visualizer.Score.ResetReveal();
+        }
         _playback.Play();
         SynchronizeAudio(force: true);
         RefreshPreview();
@@ -593,6 +598,7 @@ public partial class Main : Control
     {
         if (_busy) return;
         _playback.Stop();
+        _visualizer.Score.ResetReveal();
         _audio.Stop();
         SynchronizeAudio();
         _resumeAfterScrub = false;
@@ -1002,6 +1008,7 @@ public partial class Main : Control
             if (settings.EndSeconds > _playback.DurationSeconds)
                 throw new ArgumentException(AppLocale.T("导出结束时间不能超过当前播放时长。"));
             _exportFrameTime = settings.StartSeconds;
+            _visualizer.Score.ResetReveal();
             _exportDialog.Begin(settings, ffmpegPath);
             if (video != null)
             {
@@ -1047,6 +1054,7 @@ public partial class Main : Control
                 DisplayServer.WindowSetVsyncMode(oldVsync);
                 SetExportBusy(false);
                 if (wasPlaying) _playback.Play();
+                _visualizer.Score.ResetReveal();
                 SynchronizeAudio(force: true);
                 RefreshPreview();
                 if (_quitAfterExport) { SaveRecoveryNow(); GetTree().Quit(); }

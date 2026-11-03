@@ -432,3 +432,6 @@ MIDI 输出,MIDI output
 发送到环回 A 端口，DAW 监听同名 B 端口；踏板、弯音与表情等控制器会一并转发。,Send to loopback A and listen to B in the DAW; pedals / pitch bend / expression controllers are forwarded.
 枚举 MIDI 输出端口失败：{0},Failed to enumerate MIDI output ports: {0}
 MIDI 输出失败：{0},MIDI output failed: {0}
+显示效果,Display effect
+打字机,Typewriter
+播放到当前位置时，该位置及之前的音符出现；光标线隐藏。谱线、谱号、调号、小节线和小节号保持显示。,"Notes up to the playback position appear while the cursor line is hidden; staff lines, clefs, key signatures, barlines and measure numbers stay visible."

@@ -17,6 +17,8 @@ public sealed record ScoreRow(int Page, double Top, double Height, double Left, 
     int FirstMeasure, int LastMeasure, double CropTop, double CropHeight);
 public sealed record ScoreEvent(double Seconds, int ElementId, int Row, double X);
 public sealed record ScoreCursor(int Event, int Row, double X);
+public enum ScoreLayer { All, Grid, Notation }
+public sealed record ScoreReveal(double EmptyX, double[] Positions, double[] Boundaries);
 
 // MuseScore --score-media authors element positions on a raster at 12x the PNG export
 // resolution (positionswriter.cpp scales the configured PNG DPI by 12), while the SVG
@@ -35,13 +37,16 @@ public sealed class MuseScoreBundle
     public byte[] Midi { get; }
     public double DurationSeconds { get; }
     private readonly HashSet<int>[] _rowElements;
+    private readonly double[] _rowStaffSpace;
+    private readonly ScoreReveal[] _reveals;
     private MuseScoreBundle(string title, ScorePage[] pages, ScoreRow[] rows,
         ScoreEvent[] events, ScoreMeasureEvent[] measureEvents, byte[] midi, double duration,
-        HashSet<int>[] rowElements)
+        HashSet<int>[] rowElements, double[] rowStaffSpace)
     {
         Title = title; Pages = pages; Rows = rows; Events = events; Midi = midi; DurationSeconds = duration;
         MeasureEvents = measureEvents; Timeline = new ScoreTimeline(rows, events, duration);
-        _rowElements = rowElements;
+        _rowElements = rowElements; _rowStaffSpace = rowStaffSpace;
+        _reveals = BuildReveals();
     }
 
     public static MuseScoreBundle Read(string path) => Parse(File.ReadAllText(path));
@@ -114,12 +119,14 @@ public sealed class MuseScoreBundle
             ?? Array.Empty<ScoreMeasureEvent>();
         if (measureEvents.Any(e => !measures.ContainsKey(e.MeasureId) || e.Seconds < 0))
             throw new InvalidDataException("乐谱小节播放事件无效。");
-        return new MuseScoreBundle(title, pages, rows, events, measureEvents, midi, duration, rowElements);
+        var rowStaffSpace = rows.Select(row => geometries[row.Page].StaffSpace).ToArray();
+        return new MuseScoreBundle(title, pages, rows, events, measureEvents, midi, duration, rowElements, rowStaffSpace);
     }
 
     public ScoreCursor CursorAt(double seconds) => Timeline.CursorAt(seconds);
 
-    public string SvgForRow(int index, bool removeBackground = true, string mainColor = null)
+    public string SvgForRow(int index, bool removeBackground = true, string mainColor = null,
+        ScoreLayer layer = ScoreLayer.All)
     {
         if (index < 0 || index >= Rows.Length) throw new ArgumentOutOfRangeException(nameof(index));
         var row = Rows[index];
@@ -138,7 +145,16 @@ public sealed class MuseScoreBundle
         }
         var background = root.Elements().FirstOrDefault(e => e.Name.LocalName == "path" &&
             e.Attribute("class")?.Value == "" && string.Equals(e.Attribute("fill")?.Value, "#ffffff", StringComparison.OrdinalIgnoreCase));
-        if (removeBackground) background?.Remove();
+        if (removeBackground || layer == ScoreLayer.Notation) background?.Remove();
+        if (layer != ScoreLayer.All)
+        {
+            foreach (var element in root.Elements().ToArray())
+            {
+                if (element == background || element.Name.LocalName is "title" or "desc") continue;
+                bool grid = IsGridClass(element.Attribute("class")?.Value ?? "");
+                if (layer == ScoreLayer.Grid ? !grid : grid) element.Remove();
+            }
+        }
         if (mainColor != null)
         {
             Trifle.Visuals.VisualSettings.ValidateColor(mainColor, "乐谱主颜色");
@@ -160,6 +176,158 @@ public sealed class MuseScoreBundle
         root.SetAttributeValue("width", Format(page.Width));
         root.SetAttributeValue("height", Format(row.CropHeight));
         return document.ToString(SaveOptions.DisableFormatting);
+    }
+
+    // Structure that stays on screen while the notation is written out.
+    private static bool IsGridClass(string name) => name is "StaffLines" or "BarLine" or "Clef" or
+        "KeySig" or "TimeSig" or "Bracket" or "MeasureNumber" or "Text";
+
+    public ScoreReveal RevealForRow(int index)
+    {
+        if (index < 0 || index >= _reveals.Length) throw new ArgumentOutOfRangeException(nameof(index));
+        return _reveals[index];
+    }
+
+    public int RevealIndex(int row, double x)
+    {
+        var positions = RevealForRow(row).Positions;
+        int low = 0, high = positions.Length;
+        while (low < high)
+        {
+            int middle = low + (high - low) / 2;
+            if (positions[middle] <= x + 1e-9) low = middle + 1; else high = middle;
+        }
+        return low - 1;
+    }
+
+    public double RevealX(int row, int index)
+    {
+        var reveal = RevealForRow(row);
+        if (index < 0 || reveal.Boundaries.Length == 0) return reveal.EmptyX;
+        return reveal.Boundaries[Math.Min(index, reveal.Boundaries.Length - 1)];
+    }
+
+    private ScoreReveal[] BuildReveals()
+    {
+        var rowPositions = Rows.Select(_ => new List<double>()).ToArray();
+        foreach (var scoreEvent in Events) rowPositions[scoreEvent.Row].Add(scoreEvent.X);
+        var result = new ScoreReveal[Rows.Length];
+        for (int row = 0; row < Rows.Length; row++)
+        {
+            var positions = rowPositions[row].Distinct().OrderBy(x => x).ToArray();
+            double empty = Rows[row].Left - 1;
+            if (positions.Length == 0)
+            {
+                result[row] = new ScoreReveal(empty, positions, Array.Empty<double>());
+                continue;
+            }
+            double[] boundaries;
+            try { boundaries = ComputeBoundaries(row, positions); }
+            catch (Exception error) when (error is XmlException or InvalidDataException or FormatException or
+                InvalidOperationException or ArgumentException)
+            {
+                // A malformed row should still be readable; reveal it as a whole.
+                boundaries = positions.Select(_ => Rows[row].Right + 350).ToArray();
+            }
+            result[row] = new ScoreReveal(empty, positions, boundaries);
+        }
+        return result;
+    }
+
+    // The next chord's left bearing (accidental, articulation) can sit left of its
+    // onset. Split the gap between the current ink and the next ink instead of using
+    // the next onset x, so a detached mark is never partially revealed.
+    private double[] ComputeBoundaries(int row, double[] positions)
+    {
+        var edges = new double[positions.Length + 1];
+        edges[0] = Rows[row].Left;
+        for (int i = 1; i < positions.Length; i++) edges[i] = (positions[i - 1] + positions[i]) / 2;
+        edges[^1] = Rows[row].Right;
+        var inkLeft = Enumerable.Repeat(double.PositiveInfinity, positions.Length).ToArray();
+        var inkRight = Enumerable.Repeat(double.NegativeInfinity, positions.Length).ToArray();
+        var noteLeft = Enumerable.Repeat(double.PositiveInfinity, positions.Length).ToArray();
+        var noteRight = Enumerable.Repeat(double.NegativeInfinity, positions.Length).ToArray();
+        var notes = new List<(double Left, double Right)>();
+        var root = Xml(SvgForRow(row, true)).Root ?? throw new InvalidDataException("乐谱行 SVG 无根节点。");
+        double staffSpace = _rowStaffSpace[row];
+        foreach (var element in root.Elements())
+        {
+            if (element.Name.LocalName is "title" or "desc") continue;
+            string className = element.Attribute("class")?.Value ?? "";
+            // Unknown markup and wide spans (beams, ties, hairpins, ottavas) either have no
+            // onset of their own or cross several cells; leave them to the hard clip.
+            if (className.Length == 0 || IsGridClass(className)) continue;
+            if (Bounds(element) is not { } bounds) continue;
+            if (bounds.Right - bounds.Left > staffSpace * 4) continue;
+            int index = 0;
+            double middle = (bounds.Left + bounds.Right) / 2;
+            while (index + 1 < positions.Length && middle >= edges[index + 1]) index++;
+            inkLeft[index] = Math.Min(inkLeft[index], bounds.Left);
+            inkRight[index] = Math.Max(inkRight[index], bounds.Right);
+            if (className is not ("Note" or "Rest")) continue;
+            noteLeft[index] = Math.Min(noteLeft[index], bounds.Left);
+            noteRight[index] = Math.Max(noteRight[index], bounds.Right);
+            notes.Add((bounds.Left, bounds.Right));
+        }
+        var boundaries = new double[positions.Length];
+        bool extended = false, adjusted = false;
+        for (int i = 0; i < positions.Length; i++)
+        {
+            if (i == positions.Length - 1)
+            {
+                boundaries[i] = Rows[row].Right + 350;
+                continue;
+            }
+            double right = double.IsNegativeInfinity(inkRight[i]) ? positions[i] : inkRight[i];
+            double left = double.IsPositiveInfinity(inkLeft[i + 1]) ? positions[i + 1] : inkLeft[i + 1];
+            double currentNoteRight = noteRight[i];
+            double nextNoteLeft = noteLeft[i + 1];
+            double boundary;
+            if (left > right + 2)
+                boundary = (right + left) / 2;
+            else if (!double.IsNegativeInfinity(currentNoteRight) && left > currentNoteRight + 2)
+            {
+                // A ledger line or tie can reach into the inter-chord gap; stop in the
+                // gap after the notehead but before the next chord's left bearing.
+                boundary = (currentNoteRight + left) / 2;
+                adjusted = true;
+            }
+            else if (!double.IsNegativeInfinity(currentNoteRight) && !double.IsPositiveInfinity(nextNoteLeft) &&
+                nextNoteLeft > currentNoteRight + 2)
+            {
+                // The "next" ink can be a stem that belongs to the current chord and its
+                // box midpoint fell into the next cell. In that case use the noteheads
+                // themselves: a safe gap still exists before the next chord.
+                boundary = (currentNoteRight + nextNoteLeft) / 2;
+                adjusted = true;
+            }
+            else
+                boundary = left - 1;
+            // A tie, beam, stem or ledger line can pull the boundary into a notehead.
+            // If any note is split, extend past it. Neighbouring chords in a tuplet or
+            // grace group are then revealed together instead of one of their noteheads
+            // being cut.
+            for (int pass = 0; pass <= notes.Count; pass++)
+            {
+                double extend = double.NegativeInfinity;
+                foreach (var note in notes)
+                {
+                    double width = note.Right - note.Left;
+                    if (width <= 0) continue;
+                    double visible = Math.Clamp(boundary - note.Left, 0, width);
+                    if (visible > 0.01 && width - visible > 0.01)
+                        extend = Math.Max(extend, note.Right + 1);
+                }
+                if (extend <= boundary) break;
+                boundary = extend;
+                extended = true;
+            }
+            boundaries[i] = boundary;
+        }
+        if (extended || adjusted)
+            for (int i = 1; i < boundaries.Length; i++)
+                boundaries[i] = Math.Max(boundaries[i], boundaries[i - 1]);
+        return boundaries;
     }
 
     private sealed record Element(int Id, int Page, double X, double Y, double Width, double Height);

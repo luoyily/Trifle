@@ -11,6 +11,9 @@ public partial class ScorePanel : VBoxContainer
     public event Action<string> MuseScorePathChanged;
     public event Action DetectMuseScoreRequested;
     private CheckButton _enabled, _transparent;
+    private OptionButton _effect;
+    private Control _cursorFields;
+    private Label _typewriterHelp;
     private SpinBox _width, _y, _brightness, _cursorBrightness;
     private ColorPickerButton _color, _cursorColor;
     private LineEdit _museScorePath;
@@ -33,8 +36,10 @@ public partial class ScorePanel : VBoxContainer
         _transparent = GetNode<CheckButton>(fields + "Transparent");
         _color = GetNode<ColorPickerButton>(fields + "Color/Value");
         _brightness = GetNode<SpinBox>(fields + "Brightness/Value");
-        const string cursor = fields + "Cursor/Fields/Content/";
-        SectionHeading.Bind(GetNode<Button>(fields + "Cursor/Header"), GetNode<Control>(fields + "Cursor/Fields"), "光标线");
+        _effect = GetNode<OptionButton>(fields + "Effect/Value");
+        _cursorFields = GetNode<Control>(fields + "CursorFields");
+        _typewriterHelp = GetNode<Label>(fields + "TypewriterHelp");
+        const string cursor = fields + "CursorFields/Content/";
         _cursorColor = GetNode<ColorPickerButton>(cursor + "Color/Value");
         _cursorBrightness = GetNode<SpinBox>(cursor + "Brightness/Value");
         const string import = fields + "Import/Fields/Content/";
@@ -61,6 +66,13 @@ public partial class ScorePanel : VBoxContainer
         _next = GetNode<Button>(fields + "Rows/Next");
         _enabled.Toggled += _ => RequestSettings();
         _transparent.Toggled += _ => RequestSettings();
+        _effect.ItemSelected += _ => RequestSettings();
+        AppLocale.LanguageChanged += () =>
+        {
+            int selected = _effect.Selected;
+            PopulateEffectItems();
+            _effect.Select(selected >= 0 ? selected : 0);
+        };
         _width.ValueChanged += _ => RequestSettings();
         _y.ValueChanged += _ => RequestSettings();
         _color.ColorChanged += _ => RequestSettings();
@@ -69,15 +81,27 @@ public partial class ScorePanel : VBoxContainer
         _cursorColor.ColorChanged += _ => RequestSettings();
         _previous.Pressed += () => RowRequested?.Invoke(-1);
         _next.Pressed += () => RowRequested?.Invoke(1);
+        PopulateEffectItems();
         Refresh(_settings, false);
+    }
+
+    private void PopulateEffectItems()
+    {
+        _effect.Clear();
+        _effect.AddItem(AppLocale.T("光标线"), (int)ScoreDisplayEffect.CursorLine);
+        _effect.AddItem(AppLocale.T("打字机"), (int)ScoreDisplayEffect.Typewriter);
     }
 
     private void RequestSettings()
     {
         if (_syncing || _busy) return;
+        int effect = _effect.GetSelectedId();
         SettingsChanged?.Invoke(_settings with
         {
-            Enabled = _enabled.ButtonPressed, Width = _width.Value / 100, Y = _y.Value / 100,
+            Enabled = _enabled.ButtonPressed,
+            DisplayEffect = effect == (int)ScoreDisplayEffect.Typewriter
+                ? ScoreDisplayEffect.Typewriter : ScoreDisplayEffect.CursorLine,
+            Width = _width.Value / 100, Y = _y.Value / 100,
             RemoveBackground = _transparent.ButtonPressed, MainColor = _color.Color.ToHtml(),
             Brightness = _brightness.Value, CursorColor = _cursorColor.Color.ToHtml(), CursorBrightness = _cursorBrightness.Value
         });
@@ -87,6 +111,9 @@ public partial class ScorePanel : VBoxContainer
     {
         _syncing = true; _settings = settings; _available = available;
         _enabled.SetPressedNoSignal(settings.Enabled);
+        _effect.Select((int)settings.DisplayEffect);
+        _cursorFields.Visible = settings.DisplayEffect == ScoreDisplayEffect.CursorLine;
+        _typewriterHelp.Visible = settings.DisplayEffect == ScoreDisplayEffect.Typewriter;
         _transparent.SetPressedNoSignal(settings.RemoveBackground);
         _width.SetValueNoSignal(settings.Width * 100); _y.SetValueNoSignal(settings.Y * 100);
         _color.Color = new Color(settings.MainColor);
@@ -130,14 +157,15 @@ public partial class ScorePanel : VBoxContainer
         _next.Disabled = disabled || _row >= _rows - 1;
     }
 
-    public bool HasOpenPopup() => _color.GetPopup().Visible || _cursorColor.GetPopup().Visible || _museScoreFiles.Visible;
+    public bool HasOpenPopup() => _effect.GetPopup().Visible || _color.GetPopup().Visible ||
+        _cursorColor.GetPopup().Visible || _museScoreFiles.Visible;
     public void SetBusy(bool busy)
     {
         _busy = busy;
         _enabled.Disabled = busy || !_available;
         bool disabled = busy || !_available || !_settings.Enabled;
         _width.Editable = _y.Editable = _brightness.Editable = _cursorBrightness.Editable = !disabled;
-        _transparent.Disabled = _color.Disabled = _cursorColor.Disabled = disabled;
+        _effect.Disabled = _transparent.Disabled = _color.Disabled = _cursorColor.Disabled = disabled;
         _museScorePath.Editable = !busy;
         _browseMuseScore.Disabled = _detectMuseScore.Disabled = busy;
         RefreshNavigation();
