@@ -124,6 +124,8 @@ internal static class ScoreBundleChecks
               <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="470,540 530,540"/>
               <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="470,560 530,560"/>
               <path class="Articulation" fill="#000000" d="M480,450 L500,460 L480,470 Z"/>
+              <path class="MeasureNumber" fill="#000000" d="M500,310 L520,310 L520,330 L500,330 Z"/>
+              <path class="MeasureNumber" fill="#000000" d="M500,610 L520,610 L520,630 L500,630 Z"/>
             </svg>
             """;
         const string overlapMeasures = """
@@ -150,6 +152,9 @@ internal static class ScoreBundleChecks
                   <note><rest/><duration>4</duration><voice>1</voice><type>whole</type></note>
                 </measure>
                 <measure number="2">
+                  <direction default-x="200">
+                    <direction-type><words>Marker</words></direction-type>
+                  </direction>
                   <note default-x="184">
                     <pitch><step>C</step><octave>5</octave></pitch>
                     <duration>4</duration><voice>1</voice><type>whole</type>
@@ -179,6 +184,10 @@ internal static class ScoreBundleChecks
             "Second system strip keeps its high glyph and drops the interleaved low glyph");
         Check(!overlap.SvgForRow(0).Contains("M480,450") && overlap.SvgForRow(1).Contains("M480,450"),
             "MusicXML anchors keep a detached articulation with its high-note system");
+        Check(overlap.SvgForRow(0).Contains("M500,310") && !overlap.SvgForRow(1).Contains("M500,310"),
+            "A repeated margin x does not pull a lower measure number to the next system");
+        Check(overlap.SvgForRow(1).Contains("M500,610") && !overlap.SvgForRow(0).Contains("M500,610"),
+            "Each measure number stays on its own system");
         var fallback = MuseScoreBundle.Parse(JsonSerializer.Serialize(new
         {
             svgs = new[] { Encode(overlapPage) }, sposXML = Encode(overlapSegments),

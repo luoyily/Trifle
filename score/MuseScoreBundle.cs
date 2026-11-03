@@ -299,7 +299,8 @@ public sealed class MuseScoreBundle
                 // Detached markings (articulations, tempo, tuplets) have no line back to
                 // their staff. MusicXML knows the measure they belong to, so use its
                 // predicted x position instead of the nearest system edge.
-                int semantic = SemanticOwner(component, boxes, left, anchors, pageIndex, geometry.StaffSpace);
+                int semantic = SemanticOwner(component, boxes, left, top, bottom, anchors, rows,
+                    pageIndex, geometry.StaffSpace);
                 if (semantic >= 0)
                 {
                     owners.Clear();
@@ -351,7 +352,7 @@ public sealed class MuseScoreBundle
     // and horizontal tenths position of every detached marking. Measure boxes turn
     // that into an SVG x, which is enough to keep a symbol with its own system.
     private static int SemanticOwner(List<int> component, List<SvgBox> boxes, double left,
-        List<SemanticAnchor> anchors, int page, double staffSpace)
+        double top, double bottom, List<SemanticAnchor> anchors, ScoreRow[] rows, int page, double staffSpace)
     {
         string category = null;
         foreach (int item in component)
@@ -377,6 +378,10 @@ public sealed class MuseScoreBundle
         foreach (var anchor in anchors)
         {
             if (anchor.Page != page || anchor.Category != category) continue;
+            // The same margin x (measure numbers, repeated dynamics) can match an
+            // anchor on another system. A detached mark is always vertically near its
+            // own system, so reject anchors that are clearly on a different row.
+            if (RowGap(top, bottom, rows[anchor.Row]) > staffSpace * 8) continue;
             double distance = Math.Abs(anchor.X - left);
             if (!distances.TryGetValue(anchor.Row, out double best) || distance < best)
                 distances[anchor.Row] = distance;
