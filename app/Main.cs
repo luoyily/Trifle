@@ -160,7 +160,9 @@ public partial class Main : Control
         _playback.NoteHit += note => { _hitsSinceSeek++; _lastHit = note; };
         _fileDialog = GetNode<FileDialog>("MidiDialog");
         AppLocale.BindTitle(_fileDialog, "导入 MIDI");
-        _fileDialog.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
+        // test_assets is excluded from release exports; keep the OS default directory there.
+        string samples = ProjectSettings.GlobalizePath("res://test_assets");
+        if (DirAccess.DirExistsAbsolute(samples)) _fileDialog.CurrentDir = samples;
         _fileDialog.FileSelected += LoadMidiFile;
         _quick.MidiRequested += OpenMidiDialog;
         _quick.MidiClearRequested += ClearMidiFile;

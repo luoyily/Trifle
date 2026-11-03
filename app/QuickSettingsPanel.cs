@@ -40,7 +40,9 @@ public partial class QuickSettingsPanel : VBoxContainer
         AppLocale.BindTitle(_imageFiles, "选择背景图片");
         AppLocale.BindTitle(_videoFiles, "选择背景视频");
         AppLocale.BindTitle(_scoreFiles, "选择 MuseScore 乐谱");
-        _audioFiles.CurrentDir = ProjectSettings.GlobalizePath("res://test_assets");
+        // test_assets is excluded from release exports; keep the OS default directory there.
+        string samples = ProjectSettings.GlobalizePath("res://test_assets");
+        if (DirAccess.DirExistsAbsolute(samples)) _audioFiles.CurrentDir = samples;
         _imageFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyPictures);
         _videoFiles.CurrentDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyVideos);
         PopulateTypeItems();

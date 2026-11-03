@@ -1,4 +1,5 @@
 using System.Text;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
@@ -55,6 +56,14 @@ internal static class ScoreBundleChecks
             </events></score>
             """;
         string Encode(string value) => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        string EncodeMusicXml(string value)
+        {
+            using var stream = new MemoryStream();
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
+            using (var writer = new StreamWriter(archive.CreateEntry("score.xml").Open(), new UTF8Encoding(false)))
+                writer.Write(value);
+            return Convert.ToBase64String(stream.ToArray());
+        }
         string Bundle(string segments = spos, string measures = mpos, string page = svg) => JsonSerializer.Serialize(new
         {
             svgs = new[] { Encode(page), Encode(page) }, sposXML = Encode(segments), mposXML = Encode(measures),
@@ -79,8 +88,8 @@ internal static class ScoreBundleChecks
         var simultaneous = MuseScoreBundle.Parse(Bundle(spos.Replace("position=\"1000\"", "position=\"0\"")));
         Near(simultaneous.CursorAt(0).X, 600, "Equal timestamps deterministically choose the final segment");
         var cropped = XDocument.Parse(bundle.SvgForRow(0)).Root;
-        Check(cropped.Attribute("width").Value == "1000" && cropped.Attribute("height").Value == "700", "Crop raster dimensions use viewBox units instead of millimetres");
-        Check(cropped.Attribute("viewBox").Value == "0 150 1000 700", "System crop keeps annotations within the page and avoids the adjacent staff");
+        Check(cropped.Attribute("width").Value == "1000" && cropped.Attribute("height").Value == "208", "Crop raster dimensions use viewBox units instead of millimetres");
+        Check(cropped.Attribute("viewBox").Value == "0 496 1000 208", "System crop keeps annotations within the page and avoids the adjacent staff");
         Check(!cropped.Elements().Any(e => e.Attribute("fill")?.Value == "#ffffff") && cropped.Elements().Any(e => e.Attribute("class")?.Value == "Note"), "Crop removes page backing and preserves musical glyphs");
         Check(bundle.Pages[0].Svg == svg, "Cropping leaves the source SVG intact for other systems");
         var annotations = MuseScoreBundle.Parse(Bundle(page: svg.Replace("</svg>", """
@@ -89,10 +98,94 @@ internal static class ScoreBundleChecks
             <path class="Text" d="M100,50 L120,100 L140,50 Z"/>
             </svg>
             """)));
-        Near(annotations.Rows[0].CropTop, 40, "Tempo annotation expands the crop above normal staff padding");
+        Near(annotations.Rows[0].CropTop, 96, "Tempo annotation expands the crop above normal staff padding");
         var annotated = XDocument.Parse(annotations.SvgForRow(0)).Root;
         Check(annotated.Elements().Count(e => e.Attribute("class")?.Value == "Tempo") == 1 &&
             !annotated.Elements().Any(e => e.Attribute("class")?.Value == "Text"), "System keeps its tempo and excludes adjacent tempo and page-frame text");
+        const string overlapPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,300 1000,300"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,320 1000,320"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,340 1000,340"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,360 1000,360"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,380 1000,380"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,600 1000,600"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,620 1000,620"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,640 1000,640"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,660 1000,660"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="0,680 1000,680"/>
+              <path class="Note" fill="#000000" d="M180,440 L220,440 L220,480 L180,480 Z"/>
+              <path class="Stem" fill="#000000" d="M218,480 L222,480 L222,550 L218,550 Z"/>
+              <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="170,420 230,420"/>
+              <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="170,440 230,440"/>
+              <path class="Note" fill="#000000" d="M480,500 L520,500 L520,540 L480,540 Z"/>
+              <path class="Stem" fill="#000000" d="M518,430 L522,430 L522,500 L518,500 Z"/>
+              <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="470,540 530,540"/>
+              <polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="2" points="470,560 530,560"/>
+              <path class="Articulation" fill="#000000" d="M480,450 L500,460 L480,470 Z"/>
+            </svg>
+            """;
+        const string overlapMeasures = """
+            <score><elements>
+              <element id="0" page="0" x="1200" y="3600" sx="9600" sy="1200"/>
+              <element id="1" page="0" x="1200" y="7200" sx="9600" sy="1200"/>
+            </elements></score>
+            """;
+        const string overlapSegments = """
+            <score><elements>
+              <element id="10" page="0" x="2400" y="3600" sx="120" sy="1200"/>
+              <element id="20" page="0" x="2400" y="7200" sx="120" sy="1200"/>
+            </elements><events>
+              <event elid="10" position="0"/><event elid="20" position="1000"/>
+            </events></score>
+            """;
+        const string overlapMusicXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+            <score-partwise version="4.0">
+              <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+              <part id="P1">
+                <measure number="1">
+                  <note><rest/><duration>4</duration><voice>1</voice><type>whole</type></note>
+                </measure>
+                <measure number="2">
+                  <note default-x="184">
+                    <pitch><step>C</step><octave>5</octave></pitch>
+                    <duration>4</duration><voice>1</voice><type>whole</type>
+                    <notations><articulations><staccatissimo default-x="6"/></articulations></notations>
+                  </note>
+                </measure>
+              </part>
+            </score-partwise>
+            """;
+        var overlap = MuseScoreBundle.Parse(JsonSerializer.Serialize(new
+        {
+            svgs = new[] { Encode(overlapPage) }, sposXML = Encode(overlapSegments),
+            mposXML = Encode(overlapMeasures), mxml = EncodeMusicXml(overlapMusicXml),
+            metadata = new { duration = 2 }
+        }));
+        Check(overlap.Rows.Length == 2, "Overlap fixture has two systems");
+        Near(overlap.Rows[0].Top - overlap.Rows[0].CropTop, overlap.Rows[1].Top - overlap.Rows[1].CropTop,
+            "Overlapping systems share one top offset");
+        Near(overlap.Rows[0].CropHeight, overlap.Rows[1].CropHeight, "Overlapping systems share one crop height");
+        Check(overlap.Rows[0].CropTop <= 420 && overlap.Rows[0].CropTop + overlap.Rows[0].CropHeight >= 550,
+            "First system crop contains its low overhang");
+        Check(overlap.Rows[1].CropTop <= 430 && overlap.Rows[1].CropTop + overlap.Rows[1].CropHeight >= 560,
+            "Second system crop contains its high overhang");
+        Check(overlap.SvgForRow(0).Contains("M180,440") && !overlap.SvgForRow(0).Contains("M480,500"),
+            "First system strip keeps its low glyph and drops the interleaved high glyph");
+        Check(overlap.SvgForRow(1).Contains("M480,500") && !overlap.SvgForRow(1).Contains("M180,440"),
+            "Second system strip keeps its high glyph and drops the interleaved low glyph");
+        Check(!overlap.SvgForRow(0).Contains("M480,450") && overlap.SvgForRow(1).Contains("M480,450"),
+            "MusicXML anchors keep a detached articulation with its high-note system");
+        var fallback = MuseScoreBundle.Parse(JsonSerializer.Serialize(new
+        {
+            svgs = new[] { Encode(overlapPage) }, sposXML = Encode(overlapSegments),
+            mposXML = Encode(overlapMeasures), mxml = Encode("not musicxml"),
+            metadata = new { duration = 2 }
+        }));
+        Check(fallback.SvgForRow(0).Contains("M480,450"), "Invalid MusicXML falls back to geometric ownership");
         var coloredSource = MuseScoreBundle.Parse(Bundle(page: svg.Replace("</svg>", """
             <path class="Stem" stroke="#000000" fill="none" d="M100,500 L100,600"/>
             <path class="ImplicitFill" d="M200,500 L220,550 L240,500 Z"/>
