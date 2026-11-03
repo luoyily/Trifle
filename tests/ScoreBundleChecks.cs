@@ -172,6 +172,30 @@ internal static class ScoreBundleChecks
         var closeNotes = MuseScoreBundle.Parse(Bundle(page: closeNotesPage, segments: splitSpos, measures: splitMpos));
         Near(closeNotes.RevealX(0, 0), 381,
             "Overlapping noteheads reveal both chords instead of cutting a small sliver");
+        const string clefPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,500 800,500"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,540 800,540"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,580 800,580"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,620 800,620"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,660 800,660"/>
+              <path class="Clef" fill="#000000" d="M20,500 L40,580 L30,540 Z"/>
+              <path class="Note" fill="#000000" d="M180,540 L220,540 L220,580 L180,580 Z"/>
+              <path class="Clef" fill="#000000" d="M450,500 L510,580 L480,540 Z"/>
+              <path class="Note" fill="#000000" d="M580,540 L620,540 L620,580 L580,580 Z"/>
+            </svg>
+            """;
+        var clefBundle = MuseScoreBundle.Parse(Bundle(page: clefPage));
+        var clefGrid = XDocument.Parse(clefBundle.SvgForRow(0, true, null, ScoreLayer.Grid)).Root;
+        Check(clefGrid.Descendants().Count(e => e.Attribute("class")?.Value == "Clef") == 1 &&
+            clefGrid.ToString().Contains("M20,") && !clefGrid.ToString().Contains("M450,"),
+            "Only the system-start clef stays in the grid layer");
+        var clefNotation = XDocument.Parse(clefBundle.SvgForRow(0, true, null, ScoreLayer.Notation)).Root;
+        Check(clefNotation.Descendants().Count(e => e.Attribute("class")?.Value == "Clef") == 1 &&
+            clefNotation.ToString().Contains("M450,") && !clefNotation.ToString().Contains("M20,"),
+            "A mid-system clef moves to the notation layer");
+        Near(clefBundle.RevealX(0, 0), 335, "A mid-system clef is revealed with the nearest onset");
         var grid = XDocument.Parse(revealBundle.SvgForRow(0, true, null, ScoreLayer.Grid)).Root;
         Check(grid.Descendants().Any(e => e.Attribute("class")?.Value == "StaffLines") &&
             grid.Descendants().Any(e => e.Attribute("class")?.Value == "Clef") &&
@@ -229,6 +253,9 @@ internal static class ScoreBundleChecks
               <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
               <part id="P1">
                 <measure number="1">
+                  <direction default-x="100">
+                    <direction-type><words>Marker</words></direction-type>
+                  </direction>
                   <note><rest/><duration>4</duration><voice>1</voice><type>whole</type></note>
                 </measure>
                 <measure number="2">

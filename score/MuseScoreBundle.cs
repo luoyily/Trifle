@@ -38,6 +38,7 @@ public sealed class MuseScoreBundle
     public double DurationSeconds { get; }
     private readonly HashSet<int>[] _rowElements;
     private readonly double[] _rowStaffSpace;
+    private readonly double[] _rowFirstOnset;
     private readonly ScoreReveal[] _reveals;
     private MuseScoreBundle(string title, ScorePage[] pages, ScoreRow[] rows,
         ScoreEvent[] events, ScoreMeasureEvent[] measureEvents, byte[] midi, double duration,
@@ -46,6 +47,8 @@ public sealed class MuseScoreBundle
         Title = title; Pages = pages; Rows = rows; Events = events; Midi = midi; DurationSeconds = duration;
         MeasureEvents = measureEvents; Timeline = new ScoreTimeline(rows, events, duration);
         _rowElements = rowElements; _rowStaffSpace = rowStaffSpace;
+        _rowFirstOnset = Enumerable.Range(0, rows.Length).Select(row =>
+            events.Where(item => item.Row == row).Select(item => item.X).DefaultIfEmpty(double.PositiveInfinity).Min()).ToArray();
         _reveals = BuildReveals();
     }
 
@@ -151,7 +154,7 @@ public sealed class MuseScoreBundle
             foreach (var element in root.Elements().ToArray())
             {
                 if (element == background || element.Name.LocalName is "title" or "desc") continue;
-                bool grid = IsGridClass(element.Attribute("class")?.Value ?? "");
+                bool grid = IsGridElement(element, index);
                 if (layer == ScoreLayer.Grid ? !grid : grid) element.Remove();
             }
         }
@@ -181,6 +184,16 @@ public sealed class MuseScoreBundle
     // Structure that stays on screen while the notation is written out.
     private static bool IsGridClass(string name) => name is "StaffLines" or "BarLine" or "Clef" or
         "KeySig" or "TimeSig" or "Bracket" or "MeasureNumber" or "Text";
+
+    // A clef before the first onset belongs to the system header and stays visible.
+    // Later clefs are clef changes: they are written out with the nearest onset.
+    private bool IsGridElement(XElement element, int row)
+    {
+        string name = element.Attribute("class")?.Value ?? "";
+        if (!IsGridClass(name)) return false;
+        if (name != "Clef") return true;
+        return Bounds(element) is not { } bounds || bounds.Left <= _rowFirstOnset[row] + 0.01;
+    }
 
     public ScoreReveal RevealForRow(int index)
     {
@@ -247,17 +260,39 @@ public sealed class MuseScoreBundle
         var inkRight = Enumerable.Repeat(double.NegativeInfinity, positions.Length).ToArray();
         var noteLeft = Enumerable.Repeat(double.PositiveInfinity, positions.Length).ToArray();
         var noteRight = Enumerable.Repeat(double.NegativeInfinity, positions.Length).ToArray();
-        var notes = new List<(double Left, double Right)>();
+        var guarded = new List<(double Left, double Right)>();
         var root = Xml(SvgForRow(row, true)).Root ?? throw new InvalidDataException("乐谱行 SVG 无根节点。");
         double staffSpace = _rowStaffSpace[row];
         foreach (var element in root.Elements())
         {
             if (element.Name.LocalName is "title" or "desc") continue;
             string className = element.Attribute("class")?.Value ?? "";
-            // Unknown markup and wide spans (beams, ties, hairpins, ottavas) either have no
-            // onset of their own or cross several cells; leave them to the hard clip.
-            if (className.Length == 0 || IsGridClass(className)) continue;
+            if (className.Length == 0) continue;
             if (Bounds(element) is not { } bounds) continue;
+            if (IsGridClass(className) && (className != "Clef" || bounds.Left <= _rowFirstOnset[row] + 0.01))
+                continue;
+            if (className == "Clef")
+            {
+                // Keep the clef with the closest onset, then add its full box to that
+                // cell so the previous step stops before the clef and this step covers it.
+                int target = 0;
+                double centre = (bounds.Left + bounds.Right) / 2, distance = double.PositiveInfinity;
+                for (int j = 0; j < positions.Length; j++)
+                {
+                    double candidate = Math.Abs(positions[j] - centre);
+                    if (candidate < distance - 1e-9 ||
+                        (Math.Abs(candidate - distance) <= 1e-9 && j > target))
+                    {
+                        distance = candidate; target = j;
+                    }
+                }
+                inkLeft[target] = Math.Min(inkLeft[target], bounds.Left);
+                inkRight[target] = Math.Max(inkRight[target], bounds.Right);
+                guarded.Add((bounds.Left, bounds.Right));
+                continue;
+            }
+            // Wide spans (beams, ties, hairpins, ottavas) and unknown markup either
+            // have no onset of their own or cross several cells; leave them to the clip.
             if (bounds.Right - bounds.Left > staffSpace * 4) continue;
             int index = 0;
             double middle = (bounds.Left + bounds.Right) / 2;
@@ -267,7 +302,7 @@ public sealed class MuseScoreBundle
             if (className is not ("Note" or "Rest")) continue;
             noteLeft[index] = Math.Min(noteLeft[index], bounds.Left);
             noteRight[index] = Math.Max(noteRight[index], bounds.Right);
-            notes.Add((bounds.Left, bounds.Right));
+            guarded.Add((bounds.Left, bounds.Right));
         }
         var boundaries = new double[positions.Length];
         bool extended = false, adjusted = false;
@@ -303,20 +338,20 @@ public sealed class MuseScoreBundle
             }
             else
                 boundary = left - 1;
-            // A tie, beam, stem or ledger line can pull the boundary into a notehead.
-            // If any note is split, extend past it. Neighbouring chords in a tuplet or
-            // grace group are then revealed together instead of one of their noteheads
-            // being cut.
-            for (int pass = 0; pass <= notes.Count; pass++)
+            // A tie, beam, stem or ledger line can pull the boundary into a notehead
+            // or clef. If any guarded glyph is split, extend past it. Neighbouring
+            // chords in a tuplet or grace group are then revealed together instead of
+            // one of their noteheads being cut.
+            for (int pass = 0; pass <= guarded.Count; pass++)
             {
                 double extend = double.NegativeInfinity;
-                foreach (var note in notes)
+                foreach (var glyph in guarded)
                 {
-                    double width = note.Right - note.Left;
+                    double width = glyph.Right - glyph.Left;
                     if (width <= 0) continue;
-                    double visible = Math.Clamp(boundary - note.Left, 0, width);
+                    double visible = Math.Clamp(boundary - glyph.Left, 0, width);
                     if (visible > 0.01 && width - visible > 0.01)
-                        extend = Math.Max(extend, note.Right + 1);
+                        extend = Math.Max(extend, glyph.Right + 1);
                 }
                 if (extend <= boundary) break;
                 boundary = extend;
@@ -564,9 +599,12 @@ public sealed class MuseScoreBundle
         return ranked[0].Key;
     }
 
+    // Measure numbers are placed just above their own system and often share the
+    // left margin with text on another system. They must stay with their geometric
+    // row instead of matching an unrelated Text anchor.
     private static bool IsFloatingClass(string name) => name is
         "Articulation" or "Ornament" or "Fingering" or "Tempo" or "Text" or "Tuplet" or
-        "MeasureNumber" or "Dynamic" or "RehearsalMark" or "SystemText" or "StaffText" or
+        "Dynamic" or "RehearsalMark" or "SystemText" or "StaffText" or
         "Expression" or "Harmony" or "Lyrics" or "ChordSymbol" or "FiguredBase";
 
     private static string SvgCategory(string name) => name switch
