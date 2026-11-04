@@ -61,5 +61,5 @@ theme_type_variation = &"HelpLabel"
 [node name="Help" type="Label" parent="Fields/Content"]
 layout_mode = 2
 autowrap_mode = 3
-text = "正值延后到 MIDI 后面的小节；负值跳过乐谱开头的小节。外部同步暂不支持反复，拍号与小节顺序需一致。"
+text = "正值延后到 MIDI 后面的小节；负值跳过乐谱开头的小节。外部 MIDI 需按乐谱的反复展开顺序提供；小节数不足时会提示。"
 theme_type_variation = &"HelpLabel"

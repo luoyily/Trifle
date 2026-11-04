@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Trifle.Midi;
@@ -24,14 +23,23 @@ public sealed class ScoreTimeline
         if (song.BarGrid == null) throw new InvalidDataException("外部 MIDI 乐谱同步需要 PPQ 时间格式；不支持 SMPTE 时间格式。");
         var measures = bundle.MeasureEvents;
         if (measures.Length == 0) throw new InvalidDataException("乐谱缺少小节时间表，请重新使用 MuseScore 导出数据包。");
-        var seen = new HashSet<int>();
-        for (int i = 0; i < measures.Length; i++)
+        // MuseScore expands repeats in playback order, so a repeated measure appears
+        // more than once in this list. The occurrence, not the unique measure id, is
+        // the external MIDI bar that should receive it.
+        for (int i = 1; i < measures.Length; i++)
         {
-            if (!seen.Add(measures[i].MeasureId) || (i > 0 && measures[i].MeasureId <= measures[i - 1].MeasureId))
-                throw new InvalidDataException("外部 MIDI 同步暂不支持含反复的乐谱，请使用乐谱内 MIDI 或展开反复后重新导入。");
-            if (i > 0 && measures[i].Seconds <= measures[i - 1].Seconds)
+            if (measures[i].Seconds <= measures[i - 1].Seconds)
                 throw new InvalidDataException("乐谱小节时间表无效。");
         }
+        int externalBars = song.BarGrid.CountBars(Math.Max(song.DurationSeconds, song.EndSeconds));
+        // A positive offset may deliberately place the score later than the MIDI's
+        // first bar; the existing mapping extrapolates that tail. A negative offset
+        // removes leading score occurrences, so it lowers the required count.
+        int requiredBars = measures.Length + Math.Min(0, settings.MeasureOffset);
+        if (externalBars < requiredBars)
+            throw new InvalidDataException(
+                $"外部 MIDI 只有 {externalBars} 个展开后的小节，乐谱需要至少 {requiredBars} 个；" +
+                "请确认 MIDI 已包含反复，或调整小节偏移。");
         // MuseScore metadata duration is rounded to whole seconds. The bundled SMF
         // keeps the final bar's actual end, including a sustained final chord/rest.
         double end = bundle.DurationSeconds;

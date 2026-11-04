@@ -295,6 +295,47 @@ internal static class ScoreBundleChecks
             "A repeated margin x does not pull a lower measure number to the next system");
         Check(overlap.SvgForRow(1).Contains("M500,610") && !overlap.SvgForRow(0).Contains("M500,610"),
             "Each measure number stays on its own system");
+        const string pedalPage = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
+              <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,500 900,500"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,510 900,510"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,520 900,520"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,530 900,530"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,540 900,540"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,1400 900,1400"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,1410 900,1410"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,1420 900,1420"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,1430 900,1430"/>
+              <polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2" points="100,1440 900,1440"/>
+              <path class="PedalSegment" fill="#000000" d="M300,1050 L400,1050 L400,1150 Z"/>
+              <path class="PedalSegment" fill="#000000" d="M300,1500 L400,1500 L400,1600 Z"/>
+            </svg>
+            """;
+        const string pedalMeasures = """
+            <score><elements>
+              <element id="0" page="0" x="1200" y="6000" sx="8400" sy="1200"/>
+              <element id="1" page="0" x="1200" y="16800" sx="8400" sy="1200"/>
+            </elements></score>
+            """;
+        const string pedalSegments = """
+            <score><elements>
+              <element id="10" page="0" x="2400" y="6000" sx="120" sy="1200"/>
+              <element id="20" page="0" x="2400" y="16800" sx="120" sy="1200"/>
+            </elements><events>
+              <event elid="10" position="0"/><event elid="20" position="1000"/>
+            </events></score>
+            """;
+        var pedals = MuseScoreBundle.Parse(JsonSerializer.Serialize(new
+        {
+            svgs = new[] { Encode(pedalPage) }, sposXML = Encode(pedalSegments),
+            mposXML = Encode(pedalMeasures), metadata = new { duration = 2 }
+        }));
+        Check(pedals.Rows.Length == 2, "Pedal fixture has two systems");
+        Check(pedals.SvgForRow(0).Contains("M300,1050") && !pedals.SvgForRow(1).Contains("M300,1050"),
+            "A low pedal stays with the system above, not the nearer next system");
+        Check(pedals.SvgForRow(1).Contains("M300,1500") && !pedals.SvgForRow(0).Contains("M300,1500"),
+            "Each pedal stays with its own staff");
         var fallback = MuseScoreBundle.Parse(JsonSerializer.Serialize(new
         {
             svgs = new[] { Encode(overlapPage) }, sposXML = Encode(overlapSegments),

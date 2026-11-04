@@ -486,11 +486,27 @@ public sealed class MuseScoreBundle
                 // back towards the staff, so they are the reliable ownership anchor.
                 var ledgers = component.Select(item => boxes[item])
                     .Where(box => box.Class == "LedgerLine").ToArray();
+                // A pedal is a detached spanner below its system. When systems are close,
+                // its glyphs can be nearer the next system's top edge than their own
+                // staff's bottom edge, so only consider staffs above the pedal.
+                bool pedal = component.All(item => IsPedalClass(boxes[item].Class));
+                bool pedalBelowStaff = pedal && pageRows.Any(row =>
+                    rows[row].Top + rows[row].Height <= top + 0.5);
                 foreach (int row in pageRows)
                 {
-                    double distance = ledgers.Length > 0
-                        ? ledgers.Min(box => RowGap(box.Top, box.Bottom, rows[row]))
-                        : RowGap(top, bottom, rows[row]);
+                    double distance;
+                    if (pedalBelowStaff)
+                    {
+                        double staffBottom = rows[row].Top + rows[row].Height;
+                        if (staffBottom > top + 0.5) continue;
+                        distance = top - staffBottom;
+                    }
+                    else
+                    {
+                        distance = ledgers.Length > 0
+                            ? ledgers.Min(box => RowGap(box.Top, box.Bottom, rows[row]))
+                            : RowGap(top, bottom, rows[row]);
+                    }
                     if (distance < nearest - 1)
                     {
                         nearest = distance;
@@ -606,6 +622,9 @@ public sealed class MuseScoreBundle
         "Articulation" or "Ornament" or "Fingering" or "Tempo" or "Text" or "Tuplet" or
         "Dynamic" or "RehearsalMark" or "SystemText" or "StaffText" or
         "Expression" or "Harmony" or "Lyrics" or "ChordSymbol" or "FiguredBase";
+
+    // Pedal spanners are attached below a staff rather than floating beside it.
+    private static bool IsPedalClass(string name) => name is "PedalSegment" or "Pedal";
 
     private static string SvgCategory(string name) => name switch
     {

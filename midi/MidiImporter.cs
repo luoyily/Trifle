@@ -18,7 +18,8 @@ public static class MidiImporter
     {
         var file = MidiFile.Read(stream, new ReadingSettings
         {
-            SilentNoteOnPolicy = SilentNoteOnPolicy.NoteOff
+            SilentNoteOnPolicy = SilentNoteOnPolicy.NoteOff,
+            EndOfTrackStoringPolicy = EndOfTrackStoringPolicy.Store
         });
         if (file.OriginalFormat == MidiFileFormat.MultiSequence)
             throw new InvalidDataException("暂不支持 MIDI Format 2，请使用 Format 0 或 Format 1。");
@@ -55,9 +56,20 @@ public static class MidiImporter
 
         var sortedNotes = notes.OrderBy(note => note.StartSeconds)
             .ThenBy(note => note.TrackIndex).ThenBy(note => note.Pitch).ToArray();
-        long endTick = file.GetTimedEvents().Select(timed => timed.Time).DefaultIfEmpty(0).Max();
+        // End Of Track is stored so a final rest still contributes to the bar grid,
+        // but playback duration deliberately stops at the last sounding event.
+        long endTick = file.GetTimedEvents()
+            .Where(timed => timed.Event is not EndOfTrackEvent)
+            .Select(timed => timed.Time).DefaultIfEmpty(0).Max();
         double duration = System.Math.Max(Seconds(endTick),
             sortedNotes.Select(note => note.EndSeconds).DefaultIfEmpty(0).Max());
+        long trackEndTick = 0;
+        foreach (var chunk in file.GetTrackChunks())
+        {
+            long tick = 0;
+            foreach (var timedEvent in chunk.Events) tick += timedEvent.DeltaTime;
+            trackEndTick = System.Math.Max(trackEndTick, tick);
+        }
 
         // Keep every channel voice message. The output layer decides what to forward, so
         // program changes and channel-mode messages are still available to future features.
@@ -75,6 +87,7 @@ public static class MidiImporter
         {
             BarGrid = file.TimeDivision is TicksPerQuarterNoteTimeDivision division
                 ? new MidiBarGrid(tempoMap, division) : null,
+            EndSeconds = Seconds(trackEndTick),
             ChannelEvents = channelEvents.ToArray()
         };
     }

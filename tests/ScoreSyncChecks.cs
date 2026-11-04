@@ -29,9 +29,11 @@ static class ScoreSyncChecks
         string Encode(string value) => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
         const string measures = "<score><elements><element id='0' page='0' x='1200' y='2400' sx='4800' sy='1200'/><element id='1' page='0' x='6000' y='2400' sx='4800' sy='1200'/><element id='2' page='0' x='1200' y='6000' sx='9600' sy='1200'/></elements><events><event elid='0' position='0'/><event elid='1' position='2000'/><event elid='2' position='4000'/></events></score>";
         const string onsets = "<score><elements><element id='10' page='0' x='2400' y='2400' sx='120' sy='1200'/><element id='11' page='0' x='3600' y='2400' sx='120' sy='1200'/><element id='12' page='0' x='6600' y='2400' sx='120' sy='1200'/><element id='13' page='0' x='8400' y='2400' sx='120' sy='1200'/><element id='20' page='0' x='2400' y='6000' sx='120' sy='1200'/><element id='21' page='0' x='6000' y='6000' sx='120' sy='1200'/></elements><events><event elid='10' position='0'/><event elid='11' position='1000'/><event elid='12' position='2000'/><event elid='13' position='3000'/><event elid='20' position='4000'/><event elid='21' position='5000'/></events></score>";
-        MuseScoreBundle Bundle(string mpos = measures) => MuseScoreBundle.Parse(JsonSerializer.Serialize(new {
+        const string repeatMeasures = "<score><elements><element id='0' page='0' x='1200' y='2400' sx='4800' sy='1200'/><element id='1' page='0' x='6000' y='2400' sx='4800' sy='1200'/><element id='2' page='0' x='1200' y='6000' sx='9600' sy='1200'/></elements><events><event elid='0' position='0'/><event elid='1' position='2000'/><event elid='2' position='4000'/><event elid='0' position='6000'/><event elid='1' position='8000'/><event elid='2' position='10000'/></events></score>";
+        string repeatOnsets = onsets.Replace("</events>", "<event elid='10' position='6000'/><event elid='11' position='7000'/><event elid='12' position='8000'/><event elid='13' position='9000'/><event elid='10' position='10000'/><event elid='11' position='11000'/></events>");
+        MuseScoreBundle Bundle(string mpos = measures, string spos = onsets, double duration = 6) => MuseScoreBundle.Parse(JsonSerializer.Serialize(new {
             svgs = new[] { Encode("<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><path d='M100,200 L200,200 L200,220 Z'/></svg>") },
-            mposXML = Encode(mpos), sposXML = Encode(onsets), metadata = new { duration = 6 }
+            mposXML = Encode(mpos), sposXML = Encode(spos), metadata = new { duration }
         }));
         var bundle = Bundle();
         var defaultSong = Read(new TextEvent("End") { DeltaTime = 5760 });
@@ -62,7 +64,19 @@ static class ScoreSyncChecks
         timeline = ScoreTimeline.ForExternalMidi(bundle, slow, new() { MeasureOffset = -1 });
         Near(timeline.Events[0].Seconds, -4, "Negative offset maps the skipped score bar before zero");
         Check(timeline.CursorAt(0).Event == 2, "Playback at zero starts in the aligned later score bar");
-        Reject(() => ScoreTimeline.ForExternalMidi(Bundle(measures.Replace("elid='2'", "elid='0'")), slow, new()), "External mode rejects repeated measure playback");
+        Check(defaultSong.BarGrid.CountBars(defaultSong.DurationSeconds) == 3, "Bar grid count stops at the performance end");
+        var sixBars = Read(new TextEvent("End") { DeltaTime = 6 * 4 * 480 });
+        Check(sixBars.BarGrid.CountBars(sixBars.DurationSeconds) == 6, "Bar grid count includes every performable bar");
+        Near(sixBars.EndSeconds, 12, "End Of Track keeps the full bar grid countable");
+        var repeat = Bundle(repeatMeasures, repeatOnsets, 12);
+        var repeatTimeline = ScoreTimeline.ForExternalMidi(repeat, sixBars, new());
+        Check(repeatTimeline.Events.Length == 12, "Repeated score maps every onset occurrence");
+        Near(repeatTimeline.Events[6].Seconds, 6, "Repeated measure starts at the next external bar");
+        Near(repeatTimeline.Events[7].Seconds, 7, "Repeated measure keeps onsets inside its external bar");
+        Check(repeatTimeline.CursorAt(6).X == 200, "Cursor returns to the repeated measure");
+        Check(repeatTimeline.CursorAt(6).Row == 0, "External repeat jumps back across systems");
+        Check(repeatTimeline.CursorAt(8).X == 550, "Cursor follows the next occurrence's notation");
+        Reject(() => ScoreTimeline.ForExternalMidi(repeat, slow, new()), "External mode rejects a MIDI with fewer bars than the expanded score");
         Reject(() => ScoreTimeline.ForExternalMidi(Bundle(measures.Replace("<events>", "<unused>").Replace("</events>", "</unused>")), slow, new()), "Missing measure timing is rejected without guessing");
         Reject(() => ScoreTimeline.ForExternalMidi(bundle, slow with { BarGrid = null }, new()), "A MIDI without PPQ grid cannot use external synchronization");
         Reject(() => new ScoreSyncSettings { MeasureOffset = 1000 }.Validate(), "Out-of-range offsets are rejected");

@@ -16,6 +16,10 @@ public sealed record MidiSong(
     MidiTempoChange[] TempoChanges, MidiNote[] Notes, double DurationSeconds)
 {
     public MidiBarGrid BarGrid { get; init; }
+    // End of the last track event, including trailing rests and End Of Track. Playback
+    // duration deliberately stays at the last sounding event, while bar-grid checks
+    // need every bar the file actually enumerates.
+    public double EndSeconds { get; init; }
 
     // Channel voice messages in song-time order, including controllers the visualizer ignores.
     public MidiChannelEvent[] ChannelEvents { get; init; } = System.Array.Empty<MidiChannelEvent>();

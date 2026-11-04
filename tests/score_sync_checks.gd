@@ -119,7 +119,12 @@ func run():
 	var repeated_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(score_path))
 	repeated_data.mposXML = Marshalls.utf8_to_base64(Marshalls.base64_to_utf8(repeated_data.mposXML).replace('elid="5"', 'elid="0"'))
 	var file := FileAccess.open(repeated, FileAccess.WRITE); file.store_string(JSON.stringify(repeated_data)); file.close()
-	check(not main.call("LoadScoreBundleFile", repeated) and same_path(state().path, score_path) and not state().midi_from_score, "Unsupported repeat import preserves the current score and external MIDI")
+	check(main.call("LoadScoreBundleFile", repeated) and state().available and not state().midi_from_score and same_path(state().path, repeated), "Repeat-expanded score keeps the external MIDI")
+	var too_many := directory + "too_many_measures.json"
+	var too_many_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(repeated))
+	too_many_data.mposXML = Marshalls.utf8_to_base64(Marshalls.base64_to_utf8(too_many_data.mposXML).replace("</events>", '<event elid="0" position="11000"/></events>'))
+	file = FileAccess.open(too_many, FileAccess.WRITE); file.store_string(JSON.stringify(too_many_data)); file.close()
+	check(not main.call("LoadScoreBundleFile", too_many) and same_path(state().path, repeated) and not state().midi_from_score, "Too few external MIDI bars preserve the repeat-aware score")
 	controls.get_node("Fields/Content/Source/Value").emit_signal("item_selected", 0)
 	check(state().midi_from_score and not controls.get_node("Fields/Content/Offset/Value").editable, "UI source switch disables the external offset for bundled MIDI")
 	var settings := main.get_node("Margin/Content/Body/SettingsPanel")

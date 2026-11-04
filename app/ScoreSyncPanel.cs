@@ -41,7 +41,7 @@ public partial class ScoreSyncPanel : VBoxContainer
         _offset.SetValueNoSignal(settings.MeasureOffset);
         _status.Text = !available ? "载入乐谱后可选择同步来源。" : fromScore
             ? "使用乐谱原始发声时间。选择 MIDI 文件可改用外部 MIDI。"
-            : "按外部 MIDI 的拍号与速度表逐小节对齐。";
+            : "按外部 MIDI 的拍号与速度表逐小节对齐（含反复展开）。";
         _syncing = false; SetBusy(_busy);
     }
 
