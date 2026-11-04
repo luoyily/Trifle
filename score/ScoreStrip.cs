@@ -156,6 +156,12 @@ public partial class ScoreStrip : Node2D
         CollectPreload();
         _time = seconds;
         var cursor = Timeline.CursorAt(seconds);
+        // A repeat produces a later event at an earlier score position. Start a fresh
+        // writing pass for that occurrence while normal forward playback keeps the
+        // per-row high-water mark.
+        if (Cursor != null && Settings.DisplayEffect == ScoreDisplayEffect.Typewriter &&
+            (cursor.Row < Cursor.Row || (cursor.Row == Cursor.Row && cursor.X < Cursor.X - 0.01)))
+            _revealed.Clear();
         if (Settings.Enabled && _textureRow != cursor.Row) SelectTexture(cursor.Row, Settings, RenderWidth);
         Cursor = cursor;
         CursorGain = ScorePulse.Gain(seconds - Timeline.Events[cursor.Event].Seconds);
@@ -173,8 +179,8 @@ public partial class ScoreStrip : Node2D
         SetTime(_time);
     }
 
-    // A manual seek, stop, or export starts a fresh writing pass. Continuous
-    // playback keeps the per-row high-water mark so repeats do not erase notes.
+    // A manual seek, stop, or export starts a fresh writing pass. Normal playback
+    // keeps the per-row high-water mark; SetTime clears it when a repeat jumps back.
     public void ResetReveal()
     {
         _revealed.Clear();

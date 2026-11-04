@@ -492,10 +492,23 @@ public sealed class MuseScoreBundle
                 bool pedal = component.All(item => IsPedalClass(boxes[item].Class));
                 bool pedalBelowStaff = pedal && pageRows.Any(row =>
                     rows[row].Top + rows[row].Height <= top + 0.5);
+                // Tempo marks sit above their system. MuseScore exports the note icon and
+                // digits as separate paths, and the icon can be the one closer to the
+                // previous system, so choose the nearest staff below the whole component.
+                bool tempo = component.All(item => IsTempoClass(boxes[item].Class));
+                bool tempoAboveStaff = tempo &&
+                    !anchors.Any(anchor => anchor.Page == pageIndex && anchor.Category == "TempoBelow") &&
+                    pageRows.Any(row => rows[row].Top >= bottom - 0.5);
                 foreach (int row in pageRows)
                 {
                     double distance;
-                    if (pedalBelowStaff)
+                    if (tempoAboveStaff)
+                    {
+                        double staffTop = rows[row].Top;
+                        if (staffTop < bottom - 0.5) continue;
+                        distance = staffTop - bottom;
+                    }
+                    else if (pedalBelowStaff)
                     {
                         double staffBottom = rows[row].Top + rows[row].Height;
                         if (staffBottom > top + 0.5) continue;
@@ -626,6 +639,9 @@ public sealed class MuseScoreBundle
     // Pedal spanners are attached below a staff rather than floating beside it.
     private static bool IsPedalClass(string name) => name is "PedalSegment" or "Pedal";
 
+    // Tempo text and its metronome glyph are separate paths in MuseScore SVGs.
+    private static bool IsTempoClass(string name) => name is "Tempo" or "Metronome" or "MetronomeMark";
+
     private static string SvgCategory(string name) => name switch
     {
         "Articulation" or "Ornament" or "Fingering" => "NoteSymbol",
@@ -718,8 +734,16 @@ public sealed class MuseScoreBundle
                         "words" or "metronome" or "dynamics" or "rehearsal" or "coda" or "segno" => "Text",
                         _ => null
                     };
-                    if (category == null || (OptionalNumber(mark, "default-x") ?? directionX) is not { } x) continue;
-                    add(left + x * unit, category);
+                    if (category != null && (OptionalNumber(mark, "default-x") ?? directionX) is { } x)
+                        add(left + x * unit, category);
+                    if (mark.Name.LocalName == "metronome")
+                    {
+                        bool below = string.Equals(direction.Attribute("placement")?.Value ??
+                            mark.Attribute("placement")?.Value, "below", StringComparison.OrdinalIgnoreCase);
+                        // Row-level hint for the detached note icon and digits. Its x is
+                        // unused; it only tells row assignment which side of the staff owns it.
+                        add(left, below ? "TempoBelow" : "TempoAbove");
+                    }
                 }
             }
         }

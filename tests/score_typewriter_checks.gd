@@ -76,12 +76,31 @@ func run() -> void:
 	var second := notation.region_rect.size.x
 	check(second > first, "The next onset extends the revealed region")
 	var high: float = state().reveal_x
+	score.call("SetTime", 3.2)
+	await process_frame
+	check(abs(state().reveal_x - high) < 1.0, "Forward playback keeps the high-water reveal")
 	score.call("SetTime", 1.5)
 	await process_frame
-	check(abs(state().reveal_x - high) < 1.0, "Continuous playback keeps the high-water reveal")
+	check(state().reveal_x < high - 1.0, "A backward jump rewinds the typewriter reveal")
 	main.call("SetTime", 1.5)
 	await settled()
 	check(state().reveal_x < high - 1.0, "A manual seek resets the typewriter reveal")
+	main.call("SetTime", 3.0)
+	await settled()
+	high = state().reveal_x
+	score.call("SetTime", 5.0)
+	await process_frame
+	score.call("SetTime", 7.0)
+	await process_frame
+	var second_row_high: float = state().reveal_x
+	score.call("SetTime", 9.0)
+	await process_frame
+	check(state().row == 0 and state().reveal_x < high - 1.0,
+		"A repeat across systems rewinds the typewriter")
+	score.call("SetTime", 5.0)
+	await process_frame
+	check(state().row == 1 and state().reveal_x < second_row_high - 1.0,
+		"Systems after a repeat write themselves again")
 	main.call("SetTime", 5.0)
 	await settled()
 	check(state().row == 1 and notation.visible, "The second system appears at its first onset")

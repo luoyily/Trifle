@@ -102,6 +102,16 @@ internal static class ScoreBundleChecks
         var annotated = XDocument.Parse(annotations.SvgForRow(0)).Root;
         Check(annotated.Elements().Count(e => e.Attribute("class")?.Value == "Tempo") == 1 &&
             !annotated.Elements().Any(e => e.Attribute("class")?.Value == "Text"), "System keeps its tempo and excludes adjacent tempo and page-frame text");
+        var tempoSplit = MuseScoreBundle.Parse(Bundle(page: svg.Replace("</svg>", """
+            <path class="Tempo" d="M300,760 L340,760 L340,900 Z"/>
+            <path class="Tempo" d="M360,820 L440,820 L440,920 Z"/>
+            <path class="Tempo" d="M600,770 L640,770 L640,910 Z"/>
+            <path class="Tempo" d="M660,830 L740,830 L740,930 Z"/>
+            </svg>
+            """)));
+        Check(new[] { "M300,760", "M360,820", "M600,770", "M660,830" }.All(path => tempoSplit.SvgForRow(1).Contains(path)) &&
+            !new[] { "M300,760", "M360,820", "M600,770", "M660,830" }.Any(path => tempoSplit.SvgForRow(0).Contains(path)),
+            "Tempo icons and digits stay with the staff below, not the closer previous system");
         const string revealPage = """
             <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="2000" viewBox="0 0 1000 2000">
               <path class="" fill="#ffffff" d="M0,0 L1000,0 L1000,2000 L0,2000 Z"/>
@@ -425,6 +435,9 @@ internal static class ScoreBundleChecks
                 if (sample.CursorAt(start.Seconds).Row != row) throw new Exception("Real sample system mismatch: " + row);
             }
             Check(true, "All 12 real system boundaries locate the correct row");
+            var lastSystem = XDocument.Parse(sample.SvgForRow(sample.Rows.Length - 1)).Root;
+            Check(lastSystem.Elements().Count(e => e.Attribute("class")?.Value == "Tempo") == 2,
+                "Real sample keeps the final tempo icon and digits on the last system");
             var sampleReveal = sample.RevealForRow(5);
             int next = Array.FindIndex(sampleReveal.Positions, x => x > 3500 && x < 3510);
             Check(next > 0, "Real sample keeps the reported row-five onset");
